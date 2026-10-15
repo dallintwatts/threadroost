@@ -15,8 +15,9 @@ export function pkce() {
 }
 
 /** Start `wrangler dev` on a port with --var overrides; resolves with {url, stop}. */
-export async function startWorker({ port, vars = {}, extraArgs = [], cwd = path.resolve(import.meta.dirname, "..") }) {
-  const persist = fs.mkdtempSync(path.join(os.tmpdir(), "courier-dev-"));
+export async function startWorker({ port, vars = {}, extraArgs = [], cwd = path.resolve(import.meta.dirname, ".."), persistTo = null }) {
+  // persistTo: reuse a caller-owned state dir across restarts (the caller removes it).
+  const persist = persistTo ?? fs.mkdtempSync(path.join(os.tmpdir(), "courier-dev-"));
   const args = ["wrangler", "dev", "--port", String(port), "--ip", "127.0.0.1", "--persist-to", persist, "--inspector-port", String(port + 1000), "--log-level", "log"];
   for (const [k, v] of Object.entries(vars)) args.push("--var", `${k}:${v}`);
   args.push(...extraArgs);
@@ -55,7 +56,7 @@ export async function startWorker({ port, vars = {}, extraArgs = [], cwd = path.
     stop: () =>
       new Promise((r) => {
         child.once("exit", () => {
-          fs.rmSync(persist, { recursive: true, force: true });
+          if (!persistTo) fs.rmSync(persist, { recursive: true, force: true });
           r();
         });
         killTree("SIGTERM");
