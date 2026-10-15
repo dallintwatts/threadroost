@@ -32,6 +32,12 @@ export function fingerprint(ts, py, wrangler) {
       const [, meth, p] = /api\.call\("([A-Z]+)", f?"([^"?]+)/.exec(m);
       return `${meth} ${p.replace(/\{[a-z_]+\}/g, "{id}")}`;
     })),
+    pull_token_routes: uniq(
+      all(/\{ method: "([A-Z]+)", re: \/\^(.+?)\$\/ \}/g, (/const PULL_ROUTES[\s\S]*?\n\]\);/.exec(ts) || [""])[0], 0).map((m) => {
+        const [, meth, r] = /method: "([A-Z]+)", re: \/\^(.+?)\$\//.exec(m);
+        return `${meth} ${r.replace(/\\\//g, "/").replace(/\[a-z0-9\]\+/g, "{id}")}`;
+      }),
+    ),
     intake_imports: uniq(all(/^(?:import|from) ([^\n]+)/gm, py).flatMap((l) => l.split(" import ")[0].split(",").map((x) => x.trim().split(" ")[0]))),
   };
 }
@@ -51,6 +57,10 @@ test("capability matrix lists exactly what the code can do", { skip: !have && "d
     assert.deepEqual(l, a, `${k}: code and docs/CAPABILITIES.md disagree. Update the matrix (and its tables) in the same PR.`);
   }
   assert.deepEqual(Object.keys(listed).sort(), Object.keys(actual).sort(), "matrix has unknown or missing sections");
+  // TR-SEC-3: the pull token must cover every call the intake makes, except minting pair codes (admin only).
+  for (const c of actual.intake_api_calls.filter((x) => x !== "POST /api/pair"))
+    assert.ok(actual.pull_token_routes.includes(c), `intake calls ${c} but the pull token can't`);
+  assert.ok(!actual.pull_token_routes.some((r) => /pair|connect-link|clients|revoke|probe|dcr/.test(r)), "pull token must not reach admin routes");
 });
 
 test("fingerprint catches a new capability (regression for TR-CAP-1)", () => {

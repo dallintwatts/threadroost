@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased (2026-10-15)
+- Security (TR-SEC-3): new optional `COURIER_ADMIN_TOKEN` Worker secret. Once it is set, the pull token can only list, read and ack handoffs and read the owner alert. Pair codes, connect links and every other `/api/admin/*` route answer 403 `admin_token_required` to it, and the admin token keeps full access. Without the secret nothing changes. `/health` shows `admin_token_split`. To run `./setup.sh --doctor` webhook probes or mint a pair code after the split, point `--token-file` at a file holding the admin token.
 - Eval (TR-EVAL-1): `npm run eval` files 28 synthetic handoffs end to end (local Worker + intake.py) in 3 trials and checks every turn's bytes, the injection cases' side effects, expiry and the alert path. CI runs it on every pull request.
 - Fix (TR-BUG-36, first logged as TR-BUG-34, an id PR #1 already used): `intake.py drain --id ""` is refused as `invalid_handoff_id` instead of draining every pending handoff.
 - Skill: trimmed the threadroost-intake skill wording to 23,849 bytes (151 under the 24,000 cap). Same rules, same id patterns, same intake.py (sha256 37128067f3b3).

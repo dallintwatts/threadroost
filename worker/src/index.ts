@@ -37,6 +37,7 @@ export interface Env {
   OAUTH_KV: KVNamespace;
   OAUTH_PROVIDER: OAuthHelpers;
   COURIER_PULL_TOKEN?: string;
+  COURIER_ADMIN_TOKEN?: string;
   GROKBOT_WEBHOOK_URL?: string;
   GROKBOT_WEBHOOK_KEY?: string;
   ALLOWED_REDIRECT_HOSTS?: string; // comma list; host or any subdomain of it
@@ -1651,16 +1652,35 @@ async function handleAuthorize(request: Request, env: Env): Promise<Response> {
 // Bot-side API (pull token)
 // ---------------------------------------------------------------------------
 
-async function requirePullToken(request: Request, env: Env): Promise<Response | null> {
-  const expected = await currentPullToken(env);
-  if (!expected) return json({ error: "server_not_configured" }, 503);
+/** TR-SEC-3: what the pull token may still do once a separate admin token is set. Exactly what intake.py needs:
+ * list, read and ack handoffs, and read the last owner alert. Every other /api/* route needs COURIER_ADMIN_TOKEN. */
+const PULL_ROUTES: readonly { method: string; re: RegExp }[] = Object.freeze([
+  { method: "GET", re: /^\/api\/handoffs$/ },
+  { method: "GET", re: /^\/api\/handoffs\/[a-z0-9]+$/ },
+  { method: "POST", re: /^\/api\/handoffs\/[a-z0-9]+\/ack$/ },
+  { method: "GET", re: /^\/api\/admin\/alert$/ },
+]);
+
+function adminToken(env: Env): string | null {
+  return env.COURIER_ADMIN_TOKEN && env.COURIER_ADMIN_TOKEN.length >= 32 ? env.COURIER_ADMIN_TOKEN : null;
+}
+
+/** null = allowed. With no admin token set (older installs), the pull token keeps full access as before. */
+async function requireApiToken(request: Request, env: Env, url: URL): Promise<Response | null> {
+  const pull = await currentPullToken(env);
+  const admin = adminToken(env);
+  if (!pull && !admin) return json({ error: "server_not_configured" }, 503);
   const h = request.headers.get("authorization") || "";
   const got = h.startsWith("Bearer ") ? h.slice(7).trim() : "";
-  if (!got || !(await timingSafeEqualStr(got, expected))) {
-    log("api_auth", { outcome: "denied" });
-    return json({ error: "unauthorized" }, 401, { "www-authenticate": 'Bearer realm="courier-api"' });
+  if (got && admin && (await timingSafeEqualStr(got, admin))) return null;
+  if (got && pull && (await timingSafeEqualStr(got, pull))) {
+    if (!admin) return null;
+    if (PULL_ROUTES.some((r) => r.method === request.method && r.re.test(url.pathname))) return null;
+    log("api_auth", { outcome: "pull_token_on_admin_route" });
+    return json({ error: "admin_token_required", hint: "This route needs the admin token. The pull token can only list, read and ack handoffs." }, 403);
   }
-  return null;
+  log("api_auth", { outcome: "denied" });
+  return json({ error: "unauthorized" }, 401, { "www-authenticate": 'Bearer realm="courier-api"' });
 }
 
 function clientSummary(c: ClientInfo) {
@@ -1675,7 +1695,7 @@ function clientSummary(c: ClientInfo) {
 
 async function handleApi(request: Request, env: Env, url: URL): Promise<Response> {
   if (rateLimited(clientKey(request, "api"), 120)) return json({ error: "rate_limited" }, 429, { "retry-after": "60" });
-  const denied = await requirePullToken(request, env);
+  const denied = await requireApiToken(request, env, url);
   if (denied) return denied;
   const p = url.pathname;
   const oauth = env.OAUTH_PROVIDER;
@@ -2141,7 +2161,7 @@ const defaultHandler = {
     if (url.pathname === "/health" && request.method === "GET") {
       await ensureBootstrap(env, url.origin);
       const st = await readBoot(env);
-      return json({ ok: true, version: VERSION, webhook_configured: !!(env.GROKBOT_WEBHOOK_URL && env.GROKBOT_WEBHOOK_KEY), bot_connected: !!st.claimed_at });
+      return json({ ok: true, version: VERSION, webhook_configured: !!(env.GROKBOT_WEBHOOK_URL && env.GROKBOT_WEBHOOK_KEY), bot_connected: !!st.claimed_at, admin_token_split: !!adminToken(env) });
     }
     if (url.pathname === "/" && request.method === "GET") await ensureBootstrap(env, url.origin);
     if (url.pathname === "/" && request.method === "GET" && (request.headers.get("accept") || "").includes("text/html")) return runningPage();
