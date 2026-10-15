@@ -12,7 +12,7 @@ the `test` check fails.
 | Read | Chat turns an AI app sends it through the five MCP tools. Its own KV namespace `OAUTH_KV`. Its own secrets and settings. | Your chat apps, your accounts, your files, your Grok Bot, anything outside its KV namespace. |
 | Write | Its own KV namespace only: handoff chunks and metadata (deleted on ack, or by TTL), OAuth clients and grants, pair and claim codes, alert and webhook-health records, daily counters. | Any other storage. It has no database, R2, queue or Durable Object binding. |
 | Send | One outbound network call: a POST to `GROKBOT_WEBHOOK_URL` (https only, or http to localhost in tests). The body carries ids, counts and the chat title, never the turns. | Email, chat messages, posts or calls to any other host. |
-| Schedule | One cron, every 10 minutes: flush quiet live-sync threads, sweep empty abandoned handoffs, raise the stuck-delivery alert. | Anything else on a timer. |
+| Schedule | One cron, every 10 minutes: flush quiet live-sync threads, sweep empty abandoned handoffs, raise the stuck-delivery or storage-limit alert. One KV list of handoffs per run, plus one of threads only while a thread has unsent turns or at the top of the hour (TR-OPS-2). | Anything else on a timer. |
 
 Who can reach what:
 
@@ -85,7 +85,7 @@ so filed chats stay the source of truth and the Worker keeps nothing after an ac
   "worker_env": [
     "ABANDONED_HANDOFF_SECONDS", "ALERT_INTERVAL_SECONDS", "ALERT_STUCK_SECONDS", "ALLOWED_REDIRECT_HOSTS",
     "ALLOWED_REDIRECT_URIS", "CLAIM_TTL_SECONDS", "CONNECT_REUSE_SECONDS", "COURIER_ADMIN_TOKEN", "COURIER_PULL_TOKEN", "GROKBOT_WEBHOOK_KEY",
-    "GROKBOT_WEBHOOK_URL", "MAX_HANDOFFS_PER_DAY", "OAUTH_KV", "OAUTH_PROVIDER", "RENOTIFY_BASE_SECONDS",
+    "GROKBOT_WEBHOOK_URL", "KV_TEST_HOOKS", "MAX_HANDOFFS_PER_DAY", "OAUTH_KV", "OAUTH_PROVIDER", "RENOTIFY_BASE_SECONDS",
     "SYNC_FLUSH_MIN_SECONDS", "SYNC_MAX_CALLS_PER_THREAD_PER_DAY", "SYNC_NOTIFY_INTERVAL_SECONDS", "WEBHOOK_RETRY_DELAY_MS"
   ],
   "worker_kv_bindings": ["OAUTH_KV"],

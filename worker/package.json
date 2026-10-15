@@ -10,7 +10,7 @@
     "dev": "wrangler dev --port 8787",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --test-concurrency=1 test/local.test.mjs test/sync.test.mjs test/claim.test.mjs test/bugfix.test.mjs test/loop.test.mjs test/alert.test.mjs test/state.test.mjs test/intake.test.mjs test/tokensplit.test.mjs",
+    "test": "node --test --test-concurrency=1 test/local.test.mjs test/sync.test.mjs test/claim.test.mjs test/bugfix.test.mjs test/loop.test.mjs test/alert.test.mjs test/state.test.mjs test/intake.test.mjs test/tokensplit.test.mjs test/kvlist.test.mjs",
     "test:setup": "node --test test/setup.test.mjs test/docs.test.mjs test/capabilities.test.mjs",
     "eval": "node eval/intake.eval.mjs --trials 3",
     "preflight": "node test/remote-preflight.mjs"

@@ -312,7 +312,7 @@ def note_delivery(led, hid, delivery):
 
 
 def check_alert(api, root):
-    st, p = api.call("GET", "/api/admin/alert")  # new owner alert or None; text rebuilt from numbers only
+    st, p = api.call("GET", "/api/admin/alert")  # text rebuilt from numbers only
     a = (p or {}).get("alert") or {} if st == 200 else {}
     aid = str(a.get("alert_id", ""))
     if not DELIVERY_RE.match(aid):
@@ -332,6 +332,8 @@ def check_alert(api, root):
         o = n > 1
         msg += (f" {n} finished chat{'s have' if o else ' has'} waited over {int(a.get('stuck_after_minutes', 30) or 0)} minutes"
                 f" to reach me ({'oldest: ' * o}{m} minutes{'' if o else ' so far'}).")
+    if "storage_list_limited" in (a.get("kinds") or []):
+        msg += " Cloudflare's daily KV list limit is hit. Waiting chats are safe and reach me after 00:00 UTC."
     if "webhook_failing" in (a.get("kinds") or []):
         why = f"HTTP {hs}" if isinstance(hs, int) else "no answer"
         msg += f" Your Worker's last {int(a.get('consecutive_failures') or 0)} messages to me failed (latest: {why})."
@@ -433,17 +435,16 @@ def main():
     ids = [a.id] if one else []
     if not one:
         st, p = api.call("GET", "/api/handoffs?status=pending")
-        if st != 200:
-            print(json.dumps({"ok": False, "error": p.get("error", f"http_{st}")}))
-            return 1
-        ids = [x["handoff_id"] for x in sorted(p["handoffs"], key=lambda x: x.get("created_at") or "")]
-    results = [intake_one(api, i, root, tz, ack=not a.no_ack, dry=a.dry_run, delivery=a.delivery if one else None) for i in ids]
-    out = {"ok": all(r["ok"] for r in results), "processed": len(results), "results": results}
+        ids = [x["handoff_id"] for x in sorted(p["handoffs"], key=lambda x: x.get("created_at") or "")] if st == 200 else None
+    results = [intake_one(api, i, root, tz, ack=not a.no_ack, dry=a.dry_run, delivery=a.delivery if one else None) for i in ids or []]
+    out = {"ok": ids is not None and all(r["ok"] for r in results), "processed": len(results), "results": results}
+    if ids is None:
+        out["error"] = p.get("error", f"http_{st}")
     alert = None if (one or a.dry_run) else check_alert(api, root)
     if alert:
         out["alert"] = alert
     print(json.dumps(out, ensure_ascii=False))
-    return 0 if all(r["ok"] for r in results) else 1
+    return 0 if out["ok"] else 1
 
 
 if __name__ == "__main__":

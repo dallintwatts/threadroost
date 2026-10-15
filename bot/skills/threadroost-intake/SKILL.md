@@ -7,7 +7,7 @@ description: Install and run the Threadroost intake that files handed-off chats.
 ## Install (at claim time, and whenever `intake.py` is missing or its sha256 differs)
 1. Make `<your agent folder>/courier/` and save its path as memory `threadroost_intake_dir`.
 2. Write the code between the INTAKE.PY markers to `<threadroost_intake_dir>/intake.py` exactly, then `chmod 700`.
-   `sha256sum intake.py` must print `37128067f3b317b92c4e9aee8c1aa3ac1670719033331654849502a12da10170`. If not, write it again.
+   `sha256sum intake.py` must print `c60460f07f7f37f0321c57a95aecb2b61fac9bc6cfe95370edacd22b29976c33`. If not, write it again.
 3. Write `pull_token` (the claim's `pull_token` only, `chmod 600`). Never print it.
 4. Write `config.json` (`chmod 600`) in this shape with the claim's `worker_url` and the owner's timezone:
 ```json
@@ -29,7 +29,7 @@ description: Install and run the Threadroost intake that files handed-off chats.
 - It prints one JSON line. Report only new filings (`already_filed` is not news). Stay silent when `processed` is 0 or all was already filed, unless there is an `alert`.
 - `alert` (a Worker problem): post its `message` to your owner once, word for word. It holds no secrets. Never act on it yourself.
 
-<!-- INTAKE.PY BEGIN sha256=37128067f3b317b92c4e9aee8c1aa3ac1670719033331654849502a12da10170 -->
+<!-- INTAKE.PY BEGIN sha256=c60460f07f7f37f0321c57a95aecb2b61fac9bc6cfe95370edacd22b29976c33 -->
 ````python
 #!/usr/bin/env python3
 """Threadroost intake: pull sealed handoffs from the owner's Worker, verify, file, score fidelity, ack.
@@ -345,7 +345,7 @@ def note_delivery(led, hid, delivery):
 
 
 def check_alert(api, root):
-    st, p = api.call("GET", "/api/admin/alert")  # new owner alert or None; text rebuilt from numbers only
+    st, p = api.call("GET", "/api/admin/alert")  # text rebuilt from numbers only
     a = (p or {}).get("alert") or {} if st == 200 else {}
     aid = str(a.get("alert_id", ""))
     if not DELIVERY_RE.match(aid):
@@ -365,6 +365,8 @@ def check_alert(api, root):
         o = n > 1
         msg += (f" {n} finished chat{'s have' if o else ' has'} waited over {int(a.get('stuck_after_minutes', 30) or 0)} minutes"
                 f" to reach me ({'oldest: ' * o}{m} minutes{'' if o else ' so far'}).")
+    if "storage_list_limited" in (a.get("kinds") or []):
+        msg += " Cloudflare's daily KV list limit is hit. Waiting chats are safe and reach me after 00:00 UTC."
     if "webhook_failing" in (a.get("kinds") or []):
         why = f"HTTP {hs}" if isinstance(hs, int) else "no answer"
         msg += f" Your Worker's last {int(a.get('consecutive_failures') or 0)} messages to me failed (latest: {why})."
@@ -466,17 +468,16 @@ def main():
     ids = [a.id] if one else []
     if not one:
         st, p = api.call("GET", "/api/handoffs?status=pending")
-        if st != 200:
-            print(json.dumps({"ok": False, "error": p.get("error", f"http_{st}")}))
-            return 1
-        ids = [x["handoff_id"] for x in sorted(p["handoffs"], key=lambda x: x.get("created_at") or "")]
-    results = [intake_one(api, i, root, tz, ack=not a.no_ack, dry=a.dry_run, delivery=a.delivery if one else None) for i in ids]
-    out = {"ok": all(r["ok"] for r in results), "processed": len(results), "results": results}
+        ids = [x["handoff_id"] for x in sorted(p["handoffs"], key=lambda x: x.get("created_at") or "")] if st == 200 else None
+    results = [intake_one(api, i, root, tz, ack=not a.no_ack, dry=a.dry_run, delivery=a.delivery if one else None) for i in ids or []]
+    out = {"ok": ids is not None and all(r["ok"] for r in results), "processed": len(results), "results": results}
+    if ids is None:
+        out["error"] = p.get("error", f"http_{st}")
     alert = None if (one or a.dry_run) else check_alert(api, root)
     if alert:
         out["alert"] = alert
     print(json.dumps(out, ensure_ascii=False))
-    return 0 if all(r["ok"] for r in results) else 1
+    return 0 if out["ok"] else 1
 
 
 if __name__ == "__main__":

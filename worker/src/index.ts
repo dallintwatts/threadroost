@@ -53,6 +53,7 @@ export interface Env {
   ALERT_INTERVAL_SECONDS?: string; // at most one alert per this many seconds (default 3600)
   RENOTIFY_BASE_SECONDS?: string; // first webhook retry delay for queued handoffs (default 600, doubles each try)
   CONNECT_REUSE_SECONDS?: string; // a Connect link asked for again within this window is returned unchanged (default 300)
+  KV_TEST_HOOKS?: string; // tests only (TR-OPS-2): "count" logs every KV list, "429" also makes every KV list fail like the daily limit. Never set in production.
 }
 
 const VERSION = "1.2.2";
@@ -113,6 +114,7 @@ const K = {
   dcrLog: "courier:dcrlog",
   whHealth: "courier:whhealth", // consecutive webhook failures (no content, no secrets)
   alert: "courier:alert", // last owner alert sent (TR-ALERT-1)
+  streamsActive: "courier:streams-active", // TR-OPS-2: set while any synced thread has unsent turns, so the cron can skip listing threads
 };
 
 type Status = "open" | "delivered" | "queued" | "filed";
@@ -223,6 +225,34 @@ function utf8Len(s: string): number {
 function log(evt: string, fields: Record<string, unknown> = {}): void {
   // One JSON line per outcome. Never include content, tokens, codes or IPs.
   console.log(JSON.stringify({ evt, ...fields }));
+}
+
+/**
+ * TR-OPS-2: Workers KV LIST is the scarce operation (1,000 a day on the free plan, then every list fails with 429
+ * until 00:00 UTC). A failed list must never delete or lose anything: callers treat it as "don't know" and skip.
+ */
+function isKvListLimit(e: unknown): boolean {
+  return /429|too many requests|limit/i.test(String((e as Error)?.message ?? e));
+}
+
+/** Tests only: count every KV list (and optionally fail it with a 429) without touching production behaviour. */
+function withKvHooks(env: Env): Env {
+  const mode = env.KV_TEST_HOOKS;
+  if (mode !== "count" && mode !== "429") return env;
+  const kv = env.OAUTH_KV;
+  const wrapped = new Proxy(kv, {
+    get(t, prop) {
+      if (prop === "list")
+        return async (o?: KVNamespaceListOptions) => {
+          log("kv_list", { prefix: String(o?.prefix ?? "").replace(/^(courier:[a-z]+:).*/, "$1"), failed: mode === "429" });
+          if (mode === "429") throw new Error("KV LIST failed: 429 Too Many Requests");
+          return t.list(o);
+        };
+      const v = Reflect.get(t, prop);
+      return typeof v === "function" ? v.bind(t) : v;
+    },
+  });
+  return { ...env, OAUTH_KV: wrapped as KVNamespace };
 }
 
 function json(data: unknown, status = 200, headers: Record<string, string> = {}): Response {
@@ -739,7 +769,7 @@ interface AlertRecord {
   sent_at: number;
   delivered: boolean;
   fingerprint: string;
-  kinds: ("stuck_handoffs" | "webhook_failing")[];
+  kinds: ("stuck_handoffs" | "webhook_failing" | "storage_list_limited")[];
   stuck_after_minutes: number;
   stuck_handoffs: { handoff_id: string; minutes: number }[];
   consecutive_failures: number;
@@ -764,8 +794,10 @@ async function noteWebhookHealth(env: Env, w: NonNullable<HandoffMeta["webhook"]
 }
 
 /** Plain-words alert text. No titles, chat text, URLs, tokens or keys. */
-export function alertMessage(a: Pick<AlertRecord, "stuck_handoffs" | "consecutive_failures" | "last_failure">, stuckMinutes: number): string {
+export function alertMessage(a: Pick<AlertRecord, "stuck_handoffs" | "consecutive_failures" | "last_failure">, stuckMinutes: number, listLimited = false): string {
   const lines: string[] = [];
+  if (listLimited)
+    lines.push("Your Worker's storage hit Cloudflare's daily limit on lookups (KV list), so it can't see which chats are waiting until the limit resets at 00:00 UTC. Nothing was deleted. New chats are still saved and reach your bot after the reset. If this repeats, run ./setup.sh --doctor.");
   if (a.stuck_handoffs.length) {
     const oldest = Math.max(...a.stuck_handoffs.map((h) => h.minutes));
     const n = a.stuck_handoffs.length;
@@ -787,10 +819,13 @@ export function alertMessage(a: Pick<AlertRecord, "stuck_handoffs" | "consecutiv
  * failed. At most one alert per ALERT_INTERVAL_SECONDS, and the same problem is not re-sent within a day.
  * The alert also stays readable at GET /api/admin/alert, so a bot whose webhook is down still sees it on its pull.
  */
-async function checkAlerts(env: Env, now = Date.now()): Promise<"none" | "rate_limited" | "duplicate" | "sent" | "failed"> {
+async function checkAlerts(env: Env, now = Date.now(), metas: MetaItem[] | null = null): Promise<"none" | "rate_limited" | "duplicate" | "sent" | "failed"> {
+  // metas comes from the cron's one shared list (TR-OPS-2). null means that list failed (KV list limit), which is
+  // itself worth an alert: the stuck check can't run, so say so instead of staying silent.
+  const listLimited = metas === null;
   const stuckSecs = envSeconds(env.ALERT_STUCK_SECONDS, ALERT_STUCK_SECONDS);
   const stuck: { handoff_id: string; minutes: number }[] = [];
-  for (const c of (await listMetas(env)).filter((i) => i.s === "queued").reverse().slice(0, 50)) { // oldest first: they are the ones most likely stuck
+  for (const c of (metas ?? []).filter((i) => i.s === "queued").reverse().slice(0, 50)) { // oldest first: they are the ones most likely stuck
     const m = await getMeta(env, c.id);
     if (!m || m.status !== "queued") continue;
     const age = now - Date.parse(m.sealed_at || m.created_at);
@@ -798,8 +833,12 @@ async function checkAlerts(env: Env, now = Date.now()): Promise<"none" | "rate_l
   }
   const wh = ((await env.OAUTH_KV.get(K.whHealth, "json")) as WebhookHealth | null) ?? { failures: 0 };
   const failing = wh.failures >= ALERT_FAIL_THRESHOLD;
-  if (!stuck.length && !failing) return "none";
-  const kinds: AlertRecord["kinds"] = [...(stuck.length ? (["stuck_handoffs"] as const) : []), ...(failing ? (["webhook_failing"] as const) : [])];
+  if (!stuck.length && !failing && !listLimited) return "none";
+  const kinds: AlertRecord["kinds"] = [
+    ...(stuck.length ? (["stuck_handoffs"] as const) : []),
+    ...(failing ? (["webhook_failing"] as const) : []),
+    ...(listLimited ? (["storage_list_limited"] as const) : []),
+  ];
   const fingerprint = [...kinds, ...stuck.map((h) => h.handoff_id).sort()].join(",");
   const prev = (await env.OAUTH_KV.get(K.alert, "json")) as AlertRecord | null;
   if (prev && now - prev.sent_at < envSeconds(env.ALERT_INTERVAL_SECONDS, ALERT_INTERVAL_SECONDS) * 1000) return "rate_limited";
@@ -815,7 +854,7 @@ async function checkAlerts(env: Env, now = Date.now()): Promise<"none" | "rate_l
     kinds,
     stuck_after_minutes: Math.round(stuckSecs / 60),
     ...base,
-    message: alertMessage(base, Math.round(stuckSecs / 60)),
+    message: alertMessage(base, Math.round(stuckSecs / 60), listLimited),
   };
   // Record first, so a crash mid-send can't cause a burst of repeats.
   await env.OAUTH_KV.put(K.alert, JSON.stringify(rec), { expirationTtl: 7 * 24 * 3600 });
@@ -864,12 +903,12 @@ function publicMeta(m: HandoffMeta) {
  * A handoff whose webhook failed (bot paused, network down) stays "queued". Retry the notice from the cron with
  * backoff (10, 20, 40, 80, 160 min) so it reaches the bot once it is back, even without a catch-up routine (TR-BUG-18).
  */
-async function renotifyQueued(env: Env): Promise<number> {
+async function renotifyQueued(env: Env, metas: MetaItem[]): Promise<number> {
   if (!env.GROKBOT_WEBHOOK_URL || !env.GROKBOT_WEBHOOK_KEY) return 0;
   const base = envSeconds(env.RENOTIFY_BASE_SECONDS, RENOTIFY_BASE_SECONDS) * 1000;
   const now = Date.now();
   let sent = 0;
-  for (const c of (await listMetas(env)).filter((i) => i.s === "queued").slice(0, 25)) {
+  for (const c of metas.filter((i) => i.s === "queued").slice(0, 25)) {
     const m = await getMeta(env, c.id);
     if (!m || m.status !== "queued") continue;
     const n = m.webhook?.attempts ?? 1;
@@ -885,16 +924,23 @@ async function renotifyQueued(env: Env): Promise<number> {
   return sent;
 }
 
-async function sweepAbandonedHandoffs(env: Env): Promise<number> {
+async function sweepAbandonedHandoffs(env: Env, metas: MetaItem[]): Promise<number> {
   const after = Math.max(1, envSeconds(env.ABANDONED_HANDOFF_SECONDS, ABANDONED_AFTER)) * 1000;
   const now = Date.now();
-  const cands = (await listMetas(env)).filter((i) => i.s === "open" && now - Date.parse(i.c) >= after).slice(0, 50);
+  const cands = metas.filter((i) => i.s === "open" && now - Date.parse(i.c) >= after).slice(0, 50);
   let swept = 0;
   for (const c of cands) {
     const m = await getMeta(env, c.id);
     if (!m || m.status !== "open" || (m.kind ?? "handoff") !== "handoff") continue;
-    const chunks = await env.OAUTH_KV.list({ prefix: K.chunkPrefix(m.id), limit: 1 });
-    if (chunks.keys.length) continue;
+    // Only empty open handoffs older than the threshold reach this list (rare). If it fails, keep the handoff:
+    // a skipped sweep costs nothing, a wrong delete would lose a chat.
+    let hasChunk = true;
+    try {
+      hasChunk = (await env.OAUTH_KV.list({ prefix: K.chunkPrefix(m.id), limit: 1 })).keys.length > 0;
+    } catch {
+      break;
+    }
+    if (hasChunk) continue;
     await env.OAUTH_KV.delete(K.meta(m.id));
     if (m.client_ref_hash) await env.OAUTH_KV.delete(K.ref(m.client_ref_hash));
     swept++;
@@ -903,8 +949,10 @@ async function sweepAbandonedHandoffs(env: Env): Promise<number> {
   return swept;
 }
 
-async function listMetas(env: Env): Promise<{ id: string; s: Status; t: string; c: string; n: number | null; v: string | null }[]> {
-  const out: { id: string; s: Status; t: string; c: string; n: number | null; v: string | null }[] = [];
+type MetaItem = { id: string; s: Status; t: string; c: string; n: number | null; v: string | null };
+
+async function listMetas(env: Env): Promise<MetaItem[]> {
+  const out: MetaItem[] = [];
   let cursor: string | undefined;
   do {
     const r = await env.OAUTH_KV.list<{ s: Status; t: string; c: string; n: number | null; v: string | null }>({
@@ -938,7 +986,13 @@ async function handoffStatus(env: Env, caller: Caller, a: { handoff_id?: string;
     }
     return out;
   }
-  const items = (await listMetas(env)).slice(0, 10);
+  let items: MetaItem[];
+  try {
+    items = (await listMetas(env)).slice(0, 10);
+  } catch (e) {
+    if (!isKvListLimit(e)) throw e;
+    return { error: "storage_busy", message: "The connector's storage hit its daily lookup limit, so the overview is unavailable until 00:00 UTC. Handing off and syncing still work, and nothing was lost. Ask about one handoff_id or thread_key to check it." };
+  }
   return {
     handoffs: items.map((i) => ({ handoff_id: i.id, title: i.t, status: i.s, turns: i.n, created_at: i.c, verdict: i.v })),
     threads: await listStreams(env),
@@ -1034,6 +1088,19 @@ async function putStream(env: Env, st: StreamState): Promise<void> {
     expirationTtl: STREAM_TTL,
     metadata: { t: st.thread_key.slice(0, 80), src: st.source, n: st.turns, la: st.last_at, seg: st.seg?.id ?? null, ln: st.last_notified_ms },
   });
+  if (st.seg) await markStreamsActive(env);
+}
+
+/**
+ * TR-OPS-2: a small key that says "some synced thread has unsent turns". The cron lists threads only while it
+ * exists (plus a top-of-the-hour backstop), instead of listing every 10 minutes. A read is cheap; it is rewritten
+ * only when missing or older than MARKER_REFRESH_MS, so a busy thread doesn't add a write per call.
+ */
+const MARKER_REFRESH_MS = 5 * 60 * 1000;
+async function markStreamsActive(env: Env): Promise<void> {
+  const cur = await env.OAUTH_KV.get<{ at: number }>(K.streamsActive, "json");
+  if (cur && Date.now() - cur.at < MARKER_REFRESH_MS) return;
+  await env.OAUTH_KV.put(K.streamsActive, JSON.stringify({ at: Date.now() }), { expirationTtl: STREAM_TTL });
 }
 
 /** Seal the thread's open segment into a regular handoff. Returns the meta (status "queued") or null. */
@@ -1300,14 +1367,23 @@ function lastExcerpt(turns: { text: string }[]): string | null {
 }
 
 /** Cron: seal and notify threads whose open segment has waited at least one interval. */
-async function flushIdleStreams(env: Env): Promise<{ checked: number; flushed: number }> {
+async function flushIdleStreams(env: Env, backstop = false): Promise<{ checked: number; flushed: number; skipped?: boolean }> {
   const interval = envSeconds(env.SYNC_NOTIFY_INTERVAL_SECONDS, DEFAULT_NOTIFY_INTERVAL);
   const now = Date.now();
+  // TR-OPS-2: no marker means no thread has unsent turns, so skip the list. The hourly backstop lists anyway, in
+  // case a marker write was lost or raced with the clear below.
+  const marker = await env.OAUTH_KV.get<{ at: number }>(K.streamsActive, "json");
+  if (!marker && !backstop) return { checked: 0, flushed: 0, skipped: true };
   let cursor: string | undefined;
   const candidates: string[] = [];
+  let pendingLeft = 0;
   do {
     const r = await env.OAUTH_KV.list<{ seg: string | null; ln: number }>({ prefix: K.streamPrefix, cursor });
-    for (const k of r.keys) if (k.metadata?.seg && now - (k.metadata.ln ?? 0) >= interval * 1000) candidates.push(k.name.slice(K.streamPrefix.length));
+    for (const k of r.keys) {
+      if (!k.metadata?.seg) continue;
+      if (now - (k.metadata.ln ?? 0) >= interval * 1000) candidates.push(k.name.slice(K.streamPrefix.length));
+      else pendingLeft++;
+    }
     cursor = r.list_complete ? undefined : r.cursor;
   } while (cursor);
   let flushed = 0;
@@ -1323,6 +1399,12 @@ async function flushIdleStreams(env: Env): Promise<{ checked: number; flushed: n
         flushed++;
       }
     });
+  }
+  // Clear the marker only when nothing is left pending and it wasn't refreshed recently (a thread that got turns
+  // during this run refreshes it, and list metadata can lag a fresh write).
+  if (marker && !pendingLeft && flushed === candidates.length && now - marker.at > 2 * interval * 1000) {
+    const again = await env.OAUTH_KV.get<{ at: number }>(K.streamsActive, "json");
+    if (again && again.at === marker.at) await env.OAUTH_KV.delete(K.streamsActive);
   }
   log("sync_cron", { checked: candidates.length, flushed });
   return { checked: candidates.length, flushed };
@@ -1715,7 +1797,17 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
 
   if (p === "/api/handoffs" && request.method === "GET") {
     const want = url.searchParams.get("status") || "pending";
-    const all = await listMetas(env);
+    let all: MetaItem[];
+    try {
+      all = await listMetas(env);
+    } catch (e) {
+      if (!isKvListLimit(e)) throw e;
+      // TR-OPS-2: nothing is lost, the list is just unavailable. 503 + retry-after, so the intake keeps everything.
+      const reset = new Date(Date.now());
+      reset.setUTCHours(24, 0, 0, 0);
+      log("kv_list_limited", { route: "handoffs" });
+      return json({ error: "storage_list_limited", retry_after_utc: reset.toISOString(), message: "Cloudflare KV list limit reached. Waiting chats are safe. Try again after the reset." }, 503, { "retry-after": String(Math.max(60, Math.ceil((reset.getTime() - Date.now()) / 1000))) });
+    }
     let items = all.filter((i) =>
       want === "all" ? true : want === "pending" ? i.s === "queued" || i.s === "delivered" : i.s === want,
     );
@@ -1763,10 +1855,18 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
     } catch {
       /* empty body is fine */
     }
+    // TR-OPS-2: delete the known chunk keys (1..total_chunks) without a KV list. A stray chunk past total_chunks
+    // only exists if a client appended more than it finished with; probe the next seq and list only in that case.
     const keys = new Set<string>();
-    for (let i = 1; i <= (m.total_chunks ?? 0); i++) keys.add(K.chunk(m.id, i));
-    const listed = await env.OAUTH_KV.list({ prefix: K.chunkPrefix(m.id) });
-    for (const k of listed.keys) keys.add(k.name);
+    const n = m.total_chunks ?? 0;
+    for (let i = 1; i <= n; i++) keys.add(K.chunk(m.id, i));
+    if (await getChunkMeta(env, m.id, n + 1)) {
+      try {
+        for (const k of (await env.OAUTH_KV.list({ prefix: K.chunkPrefix(m.id) })).keys) keys.add(k.name);
+      } catch {
+        keys.add(K.chunk(m.id, n + 1)); // list limited: the rest expire with the 72 h content TTL
+      }
+    }
     await Promise.all([...keys].map((k) => env.OAUTH_KV.delete(k)));
     m.status = "filed";
     m.verdict = verdict;
@@ -2235,8 +2335,33 @@ function providerFor(origin: string, env: Env): OAuthProvider<Env> {
   return p;
 }
 
+/**
+ * One cron run (every 10 min). TR-OPS-2: at most one handoff list, shared by sweep, renotify and alerts, and a
+ * thread list only while a thread has unsent turns (or at the top of the hour). A failed list (KV 429) never
+ * deletes anything: sweep and renotify skip, and the alert says the storage is limited.
+ */
+async function runCron(env: Env, scheduledTime = Date.now()): Promise<void> {
+  const backstop = new Date(scheduledTime).getUTCMinutes() < 10;
+  const flush = flushIdleStreams(env, backstop).catch((e) => log("sync_cron_error", { list_limited: isKvListLimit(e), error: String(e).slice(0, 120) }));
+  let metas: MetaItem[] | null = null;
+  try {
+    metas = await listMetas(env);
+  } catch (e) {
+    log("kv_list_limited", { route: "cron", error: String(e).slice(0, 120) });
+  }
+  if (metas) {
+    await sweepAbandonedHandoffs(env, metas).catch((e) => log("sweep_error", { error: String(e).slice(0, 120) }));
+    await renotifyQueued(env, metas).catch((e) => log("renotify_error", { error: String(e).slice(0, 120) }));
+  }
+  await checkAlerts(env, Date.now(), metas).catch((e) => log("alert_error", { error: String(e).slice(0, 120) }));
+  const f = await flush;
+  await ensureBootstrap(env).catch(() => {});
+  log("cron_done", { handoffs_listed: metas !== null, threads_listed: !!f && !f.skipped, backstop });
+}
+
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, rawEnv: Env, ctx: ExecutionContext): Promise<Response> {
+    const env = withKvHooks(rawEnv);
     const url = new URL(request.url);
     if (url.pathname === "/oauth/register" && rateLimited(clientKey(request, "dcr"), 20))
       return json({ error: "rate_limited" }, 429, { "retry-after": "60" });
@@ -2264,10 +2389,9 @@ export default {
     return providerFor(url.origin, env).fetch(request, env, ctx);
   },
   // Cron trigger (wrangler.jsonc "triggers.crons"): flush live-sync threads that went quiet, sweep abandoned handoffs.
-  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
-    ctx.waitUntil(flushIdleStreams(env));
-    ctx.waitUntil(sweepAbandonedHandoffs(env));
-    ctx.waitUntil(renotifyQueued(env).then(() => checkAlerts(env)).catch((e) => log("alert_error", { error: String(e).slice(0, 120) })));
-    ctx.waitUntil(ensureBootstrap(env));
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    // Tests (KV_TEST_HOOKS) can't set the clock, so they pick the backstop slot through the cron string.
+    const forced = env.KV_TEST_HOOKS && /^test-(on|off)$/.exec(controller.cron)?.[1];
+    ctx.waitUntil(runCron(withKvHooks(env), forced ? (forced === "on" ? 0 : 10 * 60 * 1000) : controller.scheduledTime));
   },
 } satisfies ExportedHandler<Env>;
