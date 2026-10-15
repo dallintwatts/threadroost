@@ -429,16 +429,17 @@ def main():
         print(json.dumps(p if st == 200 else {"ok": False, "error": p.get("error")}, ensure_ascii=False))
         return 0 if st == 200 else 1
     root = a.root or cfg.get("handoffs_root", "/workspace/handoffs")
-    ids = [a.id] if a.id else []
-    if not a.id:
+    one = a.id is not None
+    ids = [a.id] if one else []
+    if not one:
         st, p = api.call("GET", "/api/handoffs?status=pending")
         if st != 200:
             print(json.dumps({"ok": False, "error": p.get("error", f"http_{st}")}))
             return 1
         ids = [x["handoff_id"] for x in sorted(p["handoffs"], key=lambda x: x.get("created_at") or "")]
-    results = [intake_one(api, i, root, tz, ack=not a.no_ack, dry=a.dry_run, delivery=a.delivery if a.id else None) for i in ids]
+    results = [intake_one(api, i, root, tz, ack=not a.no_ack, dry=a.dry_run, delivery=a.delivery if one else None) for i in ids]
     out = {"ok": all(r["ok"] for r in results), "processed": len(results), "results": results}
-    alert = None if (a.id or a.dry_run) else check_alert(api, root)
+    alert = None if (one or a.dry_run) else check_alert(api, root)
     if alert:
         out["alert"] = alert
     print(json.dumps(out, ensure_ascii=False))

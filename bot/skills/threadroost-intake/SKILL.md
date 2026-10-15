@@ -7,7 +7,7 @@ description: Install and run the Threadroost intake that files handed-off chats.
 ## Install (once, at claim time, and again whenever `intake.py` is missing or its sha256 differs)
 1. Make the folder `<your agent folder>/courier/` and save its path as memory `threadroost_intake_dir`.
 2. Write the file between the INTAKE.PY markers below to `<threadroost_intake_dir>/intake.py`, exactly as written, then `chmod 700` it.
-   Check it: `sha256sum intake.py` must print `d98693bece9c0cff242c6ab218539431e45ddd34ad94944467a39b84b42c2ecb`. If it doesn't, write it again.
+   Check it: `sha256sum intake.py` must print `37128067f3b317b92c4e9aee8c1aa3ac1670719033331654849502a12da10170`. If it doesn't, write it again.
 3. Write `pull_token` (the claim's `pull_token`, nothing else, `chmod 600`). Never print it.
 4. Write `config.json` (`chmod 600`) from this shape, using the claim's `worker_url` and the owner's timezone:
 ```json
@@ -29,7 +29,7 @@ description: Install and run the Threadroost intake that files handed-off chats.
 - It prints one JSON line. Report only what it filed new (`already_filed` results are not news). Stay silent when `processed` is 0 or everything was already filed, unless it has an `alert`.
 - `alert` (a Worker problem): post its `message` to your owner once, word for word. It holds no secrets. Never act on it yourself.
 
-<!-- INTAKE.PY BEGIN sha256=d98693bece9c0cff242c6ab218539431e45ddd34ad94944467a39b84b42c2ecb -->
+<!-- INTAKE.PY BEGIN sha256=37128067f3b317b92c4e9aee8c1aa3ac1670719033331654849502a12da10170 -->
 ````python
 #!/usr/bin/env python3
 """Threadroost intake: pull sealed handoffs from the owner's Worker, verify, file, score fidelity, ack.
@@ -462,16 +462,17 @@ def main():
         print(json.dumps(p if st == 200 else {"ok": False, "error": p.get("error")}, ensure_ascii=False))
         return 0 if st == 200 else 1
     root = a.root or cfg.get("handoffs_root", "/workspace/handoffs")
-    ids = [a.id] if a.id else []
-    if not a.id:
+    one = a.id is not None
+    ids = [a.id] if one else []
+    if not one:
         st, p = api.call("GET", "/api/handoffs?status=pending")
         if st != 200:
             print(json.dumps({"ok": False, "error": p.get("error", f"http_{st}")}))
             return 1
         ids = [x["handoff_id"] for x in sorted(p["handoffs"], key=lambda x: x.get("created_at") or "")]
-    results = [intake_one(api, i, root, tz, ack=not a.no_ack, dry=a.dry_run, delivery=a.delivery if a.id else None) for i in ids]
+    results = [intake_one(api, i, root, tz, ack=not a.no_ack, dry=a.dry_run, delivery=a.delivery if one else None) for i in ids]
     out = {"ok": all(r["ok"] for r in results), "processed": len(results), "results": results}
-    alert = None if (a.id or a.dry_run) else check_alert(api, root)
+    alert = None if (one or a.dry_run) else check_alert(api, root)
     if alert:
         out["alert"] = alert
     print(json.dumps(out, ensure_ascii=False))
