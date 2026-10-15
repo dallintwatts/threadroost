@@ -632,6 +632,9 @@ async function fireWebhook(env: Env, m: HandoffMeta): Promise<NonNullable<Handof
     bytes: m.bytes,
     sha256: m.sha256,
     created_at: m.created_at,
+    // TR-BUG-33: one id per send, so a bot can tell a repeated notice (retry, cron re-notify) from a new handoff.
+    delivery_id: crypto.randomUUID(),
+    attempt: (m.webhook?.attempts ?? 0) + 1,
   };
   if (m.kind === "stream") {
     body.stream_id = m.stream_id;

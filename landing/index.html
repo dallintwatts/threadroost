@@ -20,8 +20,15 @@
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Threadroost. Your SuperGrok and Claude chats, filed in your Grok Bot, word for word.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Threadroost · Your SuperGrok and Claude chats, filed in your Grok Bot">
+<meta name="twitter:description" content="Your SuperGrok chats land in your Grok Bot, word for word. Free, open source, in your own Cloudflare.">
+<meta name="twitter:image" content="https://threadroost.com/img/og.png">
+<meta name="twitter:image:alt" content="Threadroost. Your SuperGrok and Claude chats, filed in your Grok Bot, word for word.">
+<meta property="og:site_name" content="Threadroost"><meta property="og:locale" content="en_US">
+<link rel="llms" href="/llms.txt"><link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://threadroost.com/#org","name":"Threadroost","url":"https://threadroost.com/","logo":"https://threadroost.com/img/threadroost-logo-plate.png","email":"support@threadroost.com","sameAs":["<REPO_URL>"]},{"@type":"WebSite","@id":"https://threadroost.com/#site","name":"Threadroost","url":"https://threadroost.com/","publisher":{"@id":"https://threadroost.com/#org"},"inLanguage":"en"},{"@type":"SoftwareApplication","name":"Threadroost","url":"https://threadroost.com/","description":"Your SuperGrok and Claude chats, filed in your Grok Bot, word for word. Free, open source, runs in your own Cloudflare account.","applicationCategory":"DeveloperApplication","operatingSystem":"Cloudflare Workers","image":"https://threadroost.com/img/og.png","isAccessibleForFree":true,"license":"https://opensource.org/license/mit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@id":"https://threadroost.com/#org"},"softwareHelp":"<REPO_URL>/blob/main/INSTALL.md"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Who can read my chats?","acceptedAnswer":{"@type":"Answer","text":"Only you and your bot. It runs in your Cloudflare and we never see them."}},{"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"Nothing. Cloudflare’s free plan is enough. Syncing does use more of your model plan."}},{"@type":"Question","name":"I’ve never used Cloudflare.","acceptedAnswer":{"@type":"Answer","text":"That’s fine. Make a free account, click Deploy, and setup tells you what to paste."}},{"@type":"Question","name":"Does it work with Claude?","acceptedAnswer":{"@type":"Answer","text":"Yes, on demand. Say “log this” in any chat you want kept."}},{"@type":"Question","name":"What about my old chats?","acceptedAnswer":{"@type":"Answer","text":"Bring them in from each app’s data export."}},{"@type":"Question","name":"Isn’t Memory Transfer the same thing?","acceptedAnswer":{"@type":"Answer","text":"Memory tools move facts about you. Threadroost moves the whole conversation, every time."}},{"@type":"Question","name":"How do I remove it?","acceptedAnswer":{"@type":"Answer","text":"Run one command to delete your Cloudflare copy, then remove the connector."}}]}]}</script>
 <link rel="canonical" href="https://threadroost.com/">
-<title>Threadroost · Your Grok and Claude chats, inside your Grok Bot</title>
+<title>Threadroost: SuperGrok and Claude chats, filed in Grok Bot</title>
 <style>
 :root{--f:"Instrument Sans",ui-sans-serif,system-ui,sans-serif;--fm:"Geist Mono",ui-monospace,Menlo,monospace;
 /* type scale: 18px base, ratio 1.25 (major third) */
@@ -84,16 +91,16 @@ h1 .k{color:var(--teal)}
 .pkt{position:absolute;top:0;left:-6px;width:16px;height:16px;border-radius:50%;background:var(--teal)}
 .bot .msgs{min-height:0}.demo .win:first-child .msgs{min-height:196px}
 .file{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--bg)}
-.file h4{margin:0 0 4px;font-size:15px;letter-spacing:-.01em}
+.file .ft{font-weight:650;margin:0 0 4px;font-size:15px;letter-spacing:-.01em}
 .file p{margin:0;font-size:13px;color:var(--soft)}
 .file .ln{height:7px;border-radius:4px;background:var(--line);margin-top:9px}
 .file .ln.s{width:62%}
 .status{font-size:12.5px;color:var(--soft);display:flex;align-items:center;gap:7px}
 .status b{width:8px;height:8px;border-radius:50%;background:var(--teal);display:inline-block}
-.file.prior{opacity:.75;padding:10px 14px}.file.prior h4{font-size:14px}
+.file.prior{opacity:.75;padding:10px 14px}.file.prior .ft{font-size:14px}
 .typing{display:inline-flex;gap:5px;padding:12px 15px;background:var(--sand);border-radius:16px;border-bottom-left-radius:5px;justify-self:start}
 .typing i{width:7px;height:7px;border-radius:50%;background:var(--soft)}
-.f1 h4{color:var(--teal)}
+.f1 .ft{color:var(--teal)}
 .bot .typing,.bot .botsay,.bot .m{max-width:88%}
 .botsay{font-size:15px;background:var(--sand);padding:11px 15px;border-radius:16px;border-bottom-left-radius:5px}
 .cap{font-size:13.5px;color:var(--soft);text-align:center;margin:18px 0 0}
@@ -126,7 +133,7 @@ h1 .k{color:var(--teal)}
 .composer{display:flex;align-items:center;justify-content:space-between;margin:0 14px 14px;padding:9px 9px 9px 14px;border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--soft);background:var(--bg)}
 .composer i{width:24px;height:24px;border-radius:8px;background:var(--teal);opacity:.85}
 .win{background:linear-gradient(180deg,var(--surface),var(--surface)) padding-box;box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 2px 4px -2px rgba(20,32,31,.08),var(--shadow)}
-.bar .av{flex:none;width:20px;height:20px;border-radius:6px;background:var(--teal);color:var(--teal-ink);display:grid;place-items:center;font-size:11px;font-weight:800;margin-left:6px}
+.bar .av{flex:none;width:20px;height:20px;border-radius:6px;background:var(--teal);color:var(--teal-ink);display:grid;place-items:center;font-size:12px;font-weight:800;margin-left:6px}
 .pipe{background:linear-gradient(var(--line),var(--teal) 50%,var(--line))}
 .pkt{box-shadow:0 0 0 5px color-mix(in srgb,var(--teal) 22%,transparent),0 6px 14px -4px var(--teal)}
 .slot{display:grid}.slot>*{grid-area:1/1}.slot .typing{align-self:start}
@@ -252,7 +259,7 @@ header .navcta{color:var(--teal);font-weight:650}
 <body class="anon-quotes">
 <a class="skip" href="#main">Skip to content</a>
 <div class="wrap">
-<header><img src="img/threadroost-logo-v3-small.svg" alt="" width="32" height="32">Threadroost
+<header><img src="img/threadroost-logo-v3-small.svg" alt="" width="32" height="32" fetchpriority="high">Threadroost
 <nav aria-label="Page"><a href="#how">How it feels</a><a href="#answers">Answers</a><a class="navcta" href="#start">Add to Grok Bot</a></nav></header>
 
 <main id="main">
@@ -284,8 +291,8 @@ header .navcta{color:var(--teal);font-weight:650}
     <div class="bar"><i></i><i></i><i></i><span class="av" aria-hidden="true">C</span><span>Grok Bot · Chief of Staff</span><span class="tag">Example</span></div>
     <div class="msgs">
       <div class="status"><b></b>Listening for new chats</div>
-      <div class="file prior"><h4>Q4 hiring plan</h4><p class="mono">Claude · yesterday</p></div>
-      <div class="file f1"><h4>Filed: Launch project · 3 turns</h4><p class="mono">from SuperGrok · word for word</p></div>
+      <div class="file prior"><div class="ft">Q4 hiring plan</div><p class="mono">Claude · yesterday</p></div>
+      <div class="file f1"><div class="ft">Filed: Launch project · 3 turns</div><p class="mono">from SuperGrok · word for word</p></div>
       <div class="slot"><div class="typing f3" aria-hidden="true"><i></i><i></i><i></i></div>
       <div class="botsay f2">Got it. $49 with the founding discount. I drafted the announcement and queued it for your review.</div></div>
       <div class="m u f4">Perfect. Send it to me tonight.</div>
@@ -384,7 +391,7 @@ header .navcta{color:var(--teal);font-weight:650}
 <div class="cta"><a class="btn big" href="<REPO_URL>/blob/main/INSTALL.md" data-soon="Add to Grok Bot · launching soon">Add Threadroost to Grok Bot</a></div>
 </div>
 </main>
-<footer><span>Threadroost is free, MIT-licensed software. Not affiliated with xAI, Anthropic or Cloudflare.</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · support@threadroost.com</span></footer>
+<footer><span>Threadroost is free, MIT-licensed software. Not affiliated with xAI, Anthropic or Cloudflare.</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:support@threadroost.com">support@threadroost.com</a></span></footer>
 </div>
 </body>
 </html>

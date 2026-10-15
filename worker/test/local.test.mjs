@@ -289,7 +289,7 @@ test("webhook: delivered with Bearer + X-Automation-Key and small JSON; daily ca
   const w = hookB[0];
   assert.equal(w.headers.authorization, "Bearer test-webhook-key");
   assert.equal(w.headers["x-automation-key"], "test-webhook-key");
-  assert.deepEqual(Object.keys(w.body).sort(), ["bytes", "chunks", "created_at", "event", "handoff_id", "kind", "mode", "project", "sha256", "source", "title", "turns"].sort());
+  assert.deepEqual(Object.keys(w.body).sort(), ["attempt", "bytes", "chunks", "created_at", "delivery_id", "event", "handoff_id", "kind", "mode", "project", "sha256", "source", "title", "turns"].sort());
   assert.equal(w.body.kind, "handoff");
   assert.equal(w.body.source, "other", "test client redirects to a non-grok/claude host");
   assert.equal(w.body.event, "handoff_ready");
