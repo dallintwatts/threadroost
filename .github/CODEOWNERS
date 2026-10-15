@@ -1,0 +1,12 @@
+# Changes here need @dallintwatts's review.
+/worker/src/ @dallintwatts
+/bot/ @dallintwatts
+/worker/wrangler.jsonc @dallintwatts
+/worker/setup.sh @dallintwatts
+/worker/scripts/ @dallintwatts
+/worker/test/ @dallintwatts
+/worker/package.json @dallintwatts
+/worker/package-lock.json @dallintwatts
+/worker/tsconfig.json @dallintwatts
+/.cursor/ @dallintwatts
+/.github/ @dallintwatts

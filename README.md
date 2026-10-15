@@ -141,6 +141,9 @@ registered redirect URI, so Grok and Claude threads are filed separately.
 - Connecting a client needs a **one-time 8-digit pairing code** (10 minutes, single use, cancelled after 5 wrong tries)
   minted by you (`./setup.sh --pair`) or your bot.
 - Your bot talks to the Worker with a **pull token**. The Worker makes it on first start and gives it once to your bot through a single-use claim (sent only over your webhook). It is never logged or shown. See [SECURITY-SETUP-NOTES.md](SECURITY-SETUP-NOTES.md).
+- Your bot keeps the pull token in a file on its Grok Bot computer. Every bot you run shares that computer, so any of them can read the file. Grok Bot's own guidance is to treat a login or file on the computer as available to every bot you run. Keep the Threadroost bot on a computer whose other bots you trust, and rotate the token (`./setup.sh --rotate-token`) if one of them misbehaves.
+- Chat text is handed to your bot as untrusted data. Each turn sits in its own fence, ids are checked, and the intake is told never to act on what a chat says. These controls reduce, but do not eliminate, the risk from a chat that tries to give your bot instructions. Keep sending, posting and deleting behind your approval. See [Grok Bot security](https://docs.x.ai/grok-bot/security).
+- Threadroost doesn't change how Grok Bot handles your data. Files your bot writes follow Grok Bot's own storage and retention rules.
 - Thread text lives in your KV for at most 72 h and is deleted when your bot acknowledges it. Metadata is kept 30 days.
   Logs carry no content, tokens, codes or IPs, and persistent Workers Logs are off.
 
@@ -171,6 +174,8 @@ registered redirect URI, so Grok and Claude threads are filed separately.
 
 ## Develop
 
+Node.js 22 or newer is required (`engines` in `worker/package.json`). `./setup.sh --doctor` checks it.
+
 ```bash
 cd worker && npm ci
 npm run typecheck
@@ -185,7 +190,11 @@ npm run preflight -- https://<your-worker>   # read-only checks against a deploy
 - **Rotate the pull token:** `./setup.sh --rotate-token`, then `./setup.sh --reclaim` so your bot collects the new one.
 - **Change the webhook:** `./setup.sh --reset-webhook`.
 - **Unpair everything:** `POST /api/admin/revoke-all` (or ask your bot), then remove the connector in grok.com / claude.ai.
-- **Remove:** `./setup.sh --remove` (deletes the Worker, its secrets and its storage after you type the name).
+- **Remove:** uninstalling takes four steps.
+  1. In `worker/`, run `./setup.sh --remove` and type the Worker name. It deletes the Worker, its secrets and its storage. Deploy button users delete the Worker under Workers & Pages, then its KV namespace under Storage.
+  2. Remove the Threadroost connector in grok.com and claude.ai.
+  3. Ask your bot to delete its `courier/` folder (`intake.py`, `config.json`, `pull_token`) and any transcripts it filed that you don't want to keep. Then pause or delete its Threadroost routine.
+  4. Delete the bot in Grok Bot if you no longer want it. Deleting a bot doesn't delete its files or logins on the computer, so do step 3 first.
 
 ## License
 

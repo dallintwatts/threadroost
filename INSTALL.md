@@ -46,7 +46,7 @@ What happens:
 | 3 | Suggests a neutral Worker name such as `threadroost-k3x9pq` (first run only) | Press Enter |
 | 4 | Creates storage for the Worker (a KV namespace) and records its id in `wrangler.jsonc` | Nothing |
 | 5 | Deploys the Worker and its 10-minute cron trigger | On a brand-new account, pick a workers.dev subdomain when wrangler asks |
-| 6 | Creates the pull token your bot uses to collect threads. It is saved in `.courier/pull_token`, readable only by you, and never shown | Nothing |
+| 6 | Creates the pull token your bot uses to collect threads. It is saved in `.courier/pull_token` with owner-only file permissions and never shown. On the bot side, any bot on the same Grok Bot computer can read it (see the README security model) | Nothing |
 | 7 | Asks for the webhook URL and key, stores both as Worker secrets, and sends a test probe | Paste the URL, then paste the key (typing is hidden) |
 | 8 | Checks the live Worker, prints your **connector URL** and next steps, and offers a pairing code | Press Enter |
 
@@ -153,7 +153,8 @@ Say **"sync now"** before you walk away to push the last reply immediately. Othe
 
 1. In `worker/`, run `./setup.sh --remove` and type the Worker name to confirm. It deletes the Worker, its secrets and its storage. (Deploy button users: delete the Worker in the Cloudflare dashboard under Workers & Pages, then its KV namespace under Storage.)
 2. Remove the Threadroost connector in grok.com and claude.ai.
-3. Remove the bot in Grok Bot if you no longer want it. Transcripts it filed stay with it until then.
+3. Ask your bot to delete its `courier/` folder and any transcripts you don't want to keep, then pause or delete its Threadroost routine.
+4. Delete the bot in Grok Bot if you no longer want it. Deleting a bot doesn't delete its files or logins on the computer, so do step 3 first.
 
 ## Support
 

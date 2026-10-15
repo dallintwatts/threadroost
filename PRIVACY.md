@@ -14,7 +14,10 @@ When you install Threadroost you deploy your own copy (a Cloudflare Worker) to y
 - **A one-time pairing code** that expires after 10 minutes.
 
 ## Where your data goes
-Your copy sends a short notice to the bot webhook address you set up. That notice includes the thread title, project, counts and a checksum. It does not include the conversation text. Your bot then fetches the text from your copy using a private token only you hold.
+Your copy sends a short notice to the bot webhook address you set up. That notice includes the thread title, project, counts and a checksum. It does not include the conversation text. Your bot then fetches the text from your copy using a private token. Only your copy and your bot's Grok Bot computer hold it. Other bots you run on that same computer can read files there, including this token.
+
+## Your bot
+Threadroost doesn't change how Grok Bot handles your data. Transcripts your bot files are stored and kept under Grok Bot's own rules. Deleting a bot in Grok Bot doesn't delete its files, so ask it to delete them first.
 
 ## Logs
 Your copy writes short event records (for example "handoff created" or "sign-in approved"). They never contain conversation text, tokens, pairing codes or IP addresses. Saved logs are switched off by default in the settings we ship.
@@ -29,7 +32,7 @@ Your copy writes short event records (for example "handoff created" or "sign-in 
 threadroost.com is a static page. It sets no cookies and runs no analytics or trackers. Cloudflare, which hosts it, handles the standard request data needed to serve a web page. We do not receive or keep it.
 
 ## Removing everything
-In the `worker` folder, run `npx wrangler delete` to remove your copy and its secrets. Then run `npx wrangler kv namespace delete --namespace-id <id>` with the id from `wrangler.jsonc` to erase its storage. Finally, remove the connector in your chat app. Full steps are in README.md under "Update, rotate, remove".
+In the `worker` folder, run `npx wrangler delete` to remove your copy and its secrets. Then run `npx wrangler kv namespace delete --namespace-id <id>` with the id from `wrangler.jsonc` to erase its storage. Then remove the connector in your chat app. Finally, ask your bot to delete its Threadroost files before you delete the bot. Full steps are in README.md under "Update, rotate, remove".
 
 ## Contact
 support@threadroost.com

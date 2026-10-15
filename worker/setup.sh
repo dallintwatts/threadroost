@@ -152,6 +152,10 @@ mint_pair_code() {
 
 # ------------------------------------------------------------------ --doctor / --reclaim
 if [ "$OPT_DOCTOR" = 1 ] || [ "$OPT_RECLAIM" = 1 ]; then
+  command -v node >/dev/null 2>&1 || die "Node.js 22 or newer is required: https://nodejs.org (or: nvm install 22)"
+  d_node="$(node -p 'process.versions.node.split(".")[0]')"
+  [ "$d_node" -ge 22 ] || die "Node.js 22+ is required (found $(node -v)). Install it from https://nodejs.org or run: nvm install 22"
+  ok "Node $(node -v)"
   d_url="${OPT_URL:-$(LIB state-get "$STATE" worker_url)}"; d_url="${d_url%/}"; d_url="${d_url%/mcp}"
   [ -n "$d_url" ] || die "I don't know your Worker's address yet. Run ./setup.sh first, or add --url https://<your-worker>"
   if [ "$OPT_RECLAIM" = 1 ]; then
