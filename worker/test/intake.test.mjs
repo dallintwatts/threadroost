@@ -9,7 +9,7 @@ import path from "node:path";
 
 const INTAKE = process.env.INTAKE_PY || path.resolve(import.meta.dirname, "../../bot/intake.py");
 
-test("TR-BUG-34: drain --id '' is refused as invalid_handoff_id and never drains everything pending", async () => {
+test("TR-BUG-36: drain --id '' is refused as invalid_handoff_id and never drains everything pending", async () => {
   const seen = [];
   const srv = http.createServer((q, s) => {
     seen.push(`${q.method} ${q.url}`);

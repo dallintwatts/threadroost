@@ -2,7 +2,8 @@
 
 ## Unreleased (2026-10-15)
 - Eval (TR-EVAL-1): `npm run eval` files 28 synthetic handoffs end to end (local Worker + intake.py) in 3 trials and checks every turn's bytes, the injection cases' side effects, expiry and the alert path. CI runs it on every pull request.
-- Fix (TR-BUG-34): `intake.py drain --id ""` is refused as `invalid_handoff_id` instead of draining every pending handoff.
+- Fix (TR-BUG-36, first logged as TR-BUG-34, an id PR #1 already used): `intake.py drain --id ""` is refused as `invalid_handoff_id` instead of draining every pending handoff.
+- Skill: trimmed the threadroost-intake skill wording to 23,849 bytes (151 under the 24,000 cap). Same rules, same id patterns, same intake.py (sha256 37128067f3b3).
 - Alerts (TR-ALERT-1): the 10-minute cron sends your bot one `threadroost.alert` when a finished chat hasn't reached it within 30 minutes, or 3 or more webhooks in a row failed. It sends at most one an hour and doesn't repeat a delivered alert for the same problem within a day. The alert holds counts and ids only. The intake also reads `GET /api/admin/alert` on every catch-up run and shows each alert once in plain words, so alerts arrive even when webhooks are down.
 - Isolation (TR-STATE-1): removed the per-isolate client-source cache and the cached OAuth provider (it kept the first request's env). The rate limiter evicts its oldest key instead of wiping every limit. A test pins the only two allowed in-memory maps.
 - Added `.cursor/BUGBOT.md` review rules.
