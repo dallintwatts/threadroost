@@ -2098,7 +2098,7 @@ async function handleConnect(request: Request, env: Env, url: URL): Promise<Resp
   const nonce = randomSecret(16);
   if (rateLimited(clientKey(request, "connect"), 20)) return brandPage("Slow down", `<h1>Too many tries.</h1><p class="lede">Wait a minute, then open your Connect link again.</p>`, nonce, 429);
   const expired = brandPage("Link expired", `<h1>This link has expired.</h1><p class="lede">Connect links work once and last 15 minutes. ${newLinkHint(env)}.</p>`, nonce, 410);
-  const superseded = brandPage("Newer link issued", `<h1>A newer link was issued.</h1><p class="lede">Your bot sent a newer Connect link, which replaced this one. Use the latest link in your bot's chat.</p>`, nonce, 410);
+  const superseded = brandPage("Newer link issued", `<h1>A newer link was issued.</h1><p class="lede">${adminToken(env) ? `A newer Connect link replaced this one. Use the newest link you have, or ${newLinkHint(env).charAt(0).toLowerCase()}${newLinkHint(env).slice(1)}.` : "Your bot sent a newer Connect link, which replaced this one. Use the latest link in your bot's chat."}</p>`, nonce, 410);
   const isSuperseded = async (t: string) => {
     if (!t) return false;
     const old = ((await env.OAUTH_KV.get(K.connectOld, "json")) as string[] | null) ?? [];

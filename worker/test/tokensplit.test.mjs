@@ -86,6 +86,11 @@ test("TR-SEC-3: pull token refused on admin routes and pair codes, admin token a
     const page = await (await fetch(`${W.url}/connect?t=${"x".repeat(43)}`)).text();
     assert.match(page, /setup\.sh --pair/);
     assert.doesNotMatch(page, /Ask your bot for a new Connect link/);
+    const l1 = await (await call(W.url, ADMIN, "/api/connect-link", "POST")).json();
+    await call(W.url, ADMIN, "/api/connect-link?fresh=1", "POST");
+    const old = await (await fetch(l1.connect_url.replace(/^https?:\/\/[^/]+/, W.url))).text();
+    assert.match(old, /A newer Connect link replaced this one/);
+    assert.doesNotMatch(old, /bot's chat/);
   } finally {
     await W.stop();
   }
