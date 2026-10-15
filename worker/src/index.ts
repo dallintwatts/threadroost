@@ -789,7 +789,7 @@ export function alertMessage(a: Pick<AlertRecord, "stuck_handoffs" | "consecutiv
 async function checkAlerts(env: Env, now = Date.now()): Promise<"none" | "rate_limited" | "duplicate" | "sent" | "failed"> {
   const stuckSecs = envSeconds(env.ALERT_STUCK_SECONDS, ALERT_STUCK_SECONDS);
   const stuck: { handoff_id: string; minutes: number }[] = [];
-  for (const c of (await listMetas(env)).filter((i) => i.s === "queued").slice(0, 50)) {
+  for (const c of (await listMetas(env)).filter((i) => i.s === "queued").reverse().slice(0, 50)) { // oldest first: they are the ones most likely stuck
     const m = await getMeta(env, c.id);
     if (!m || m.status !== "queued") continue;
     const age = now - Date.parse(m.sealed_at || m.created_at);

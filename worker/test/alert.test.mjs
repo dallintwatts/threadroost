@@ -149,3 +149,21 @@ test("TR-ALERT-1: routine and skill surface the alert once, in plain words, and 
   const src = fs.readFileSync(path.join(import.meta.dirname, "../src/index.ts"), "utf8");
   assert.ok(src.includes('"threadroost.alert"') && src.includes('"/api/admin/alert"'));
 });
+
+test("TR-BUG-34: the skill's id patterns keep their {n,m} quantifiers (not Python tuples)", () => {
+  const skill = fs.readFileSync(path.resolve(import.meta.dirname, "../../bot/skills/threadroost-intake/SKILL.md"), "utf8");
+  assert.ok(skill.includes("^[a-z0-9]{6,40}$"), "handoff_id pattern");
+  assert.ok(skill.includes("^[A-Za-z0-9-]{1,64}$"), "delivery_id pattern");
+  assert.doesNotMatch(skill, /\]\(\d+, \d+\)\$/);
+  const re = new RegExp(skill.match(/`(\^\[a-z0-9\]\{6,40\}\$)`/)[1]);
+  assert.ok(re.test("abc123def"), "a real handoff id is accepted");
+  const chk = spawnSync("python3", [path.resolve(import.meta.dirname, "../../bot/build-skill.py"), "--check"], { encoding: "utf8" });
+  assert.equal(chk.status, 0, chk.stdout + chk.stderr);
+});
+
+test("TR-BUG-35: stuck-alert scan checks the oldest queued handoffs first (listMetas is newest-first)", () => {
+  const src = fs.readFileSync(path.resolve(import.meta.dirname, "../src/index.ts"), "utf8");
+  assert.match(src, /return out\.sort\(\(a, b\) => \(a\.c < b\.c \? 1 : -1\)\)/, "listMetas still newest-first");
+  const fn = src.slice(src.indexOf("async function checkAlerts"), src.indexOf("const wh =", src.indexOf("async function checkAlerts")));
+  assert.match(fn, /\.filter\(\(i\) => i\.s === "queued"\)\.reverse\(\)\.slice\(0, 50\)/);
+});
