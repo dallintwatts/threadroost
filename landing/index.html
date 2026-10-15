@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'self'">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Your SuperGrok and Claude chats, filed in your Grok Bot, word for word. Free, open source, runs in your own Cloudflare account.">
+<link rel="icon" type="image/svg+xml" href="img/threadroost-logo-v3-small.svg">
+<link rel="preload" href="fonts/InstrumentSans-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="theme-color" content="#FBF8F3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1211" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://threadroost.com/">
+<meta property="og:title" content="Threadroost · Your SuperGrok and Claude chats, filed in your Grok Bot">
+<meta property="og:description" content="Your SuperGrok chats land in your Grok Bot, word for word. Free, open source, in your own Cloudflare.">
+<meta property="og:image" content="https://threadroost.com/img/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Threadroost. Your SuperGrok and Claude chats, filed in your Grok Bot, word for word.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://threadroost.com/">
+<title>Threadroost · Your Grok and Claude chats, inside your Grok Bot</title>
+<style>
+:root{--f:"Instrument Sans",ui-sans-serif,system-ui,sans-serif;--fm:"Geist Mono",ui-monospace,Menlo,monospace;
+/* type scale: 18px base, ratio 1.25 (major third) */
+--t-1:14.4px;--t0:18px;--t1:22.5px;--t2:28.13px;--t3:35.16px;--t4:43.95px;--t5:54.93px;--t6:68.66px;--t7:85.83px;
+/* spacing: 8px grid */
+--s1:8px;--s2:16px;--s3:24px;--s4:32px;--s5:48px;--s6:64px;--s7:96px;--s8:128px}
+@font-face{font-family:"Instrument Sans";src:url(fonts/InstrumentSans-latin-wght.woff2) format("woff2");font-weight:400 700;font-stretch:75% 100%;font-display:swap}
+@font-face{font-family:"Geist Mono";src:url(fonts/GeistMono-subset.woff2) format("woff2");font-weight:100 900;font-display:swap}
+:root{
+  --bg:#FBF8F3;--surface:#FFFFFF;--ink:#14201F;--soft:#4A5754;--line:#E3DDD2;
+  --teal:#0F6E66;--teal-ink:#FFFFFF;--wash:#E8F3F1;--sand:#F3EDE3;--claude:#9A4222;--shadow:0 30px 60px -30px rgba(20,32,31,.25);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0C1211;--surface:#141C1B;--ink:#EEF3F2;--soft:#A9B6B3;--line:#24302E;
+  --teal:#5FE0CF;--teal-ink:#0C1211;--wash:#11302B;--sand:#1A2221;--claude:#F08A5D;--shadow:0 30px 60px -30px rgba(0,0,0,.7);
+}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 var(--t0)/1.55 var(--f);font-feature-settings:"ss01","cv11";-webkit-font-smoothing:antialiased}
+.wrap{max-width:1160px;margin:0 auto;padding:0 28px}
+a{color:inherit;text-underline-offset:4px}
+:focus-visible{outline:3px solid var(--teal);outline-offset:3px;border-radius:8px}
+.skip{position:absolute;left:-999px}.skip:focus{left:16px;top:12px;background:var(--surface);padding:8px 12px;z-index:9}
+.mono{font-family:var(--fm);letter-spacing:-.01em}
+
+header{display:flex;align-items:center;gap:10px;padding:24px 0;font-weight:680;font-size:19px;letter-spacing:-.01em}
+header img{border-radius:7px}
+header nav{margin-left:auto;display:flex;gap:26px;font-size:15px;font-weight:500;color:var(--soft)}
+header nav a{text-decoration:none}header nav a:hover{color:var(--ink)}
+
+/* HERO */
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:56px;align-items:center;padding:20px 0 40px}.hero .cap{grid-column:2;margin-top:-44px}
+.nw{white-space:nowrap}h1{font-size:clamp(var(--t4),4.4vw,var(--t6));line-height:1;letter-spacing:-.035em;margin:0 0 var(--s3);font-weight:650;font-stretch:88%}
+h1 .k{color:var(--teal)}
+.lede{font-size:var(--t1);line-height:1.45;color:var(--soft);margin:0 0 34px;max-width:27em}
+.cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 26px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:17px 28px;border-radius:14px;background:var(--teal);color:var(--teal-ink);font-weight:680;font-size:17px;text-decoration:none;transition:transform .2s cubic-bezier(.3,1.5,.5,1),box-shadow .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px -10px var(--teal)}
+.btn:active{transform:translateY(1px) scale(.98)}
+.btn.soon{background:transparent;color:var(--teal);border:2px solid var(--teal);cursor:default}
+.btn.soon:hover{transform:none;box-shadow:none}
+.quiet{font-size:16px;color:var(--soft)}
+.facts{display:flex;flex-wrap:wrap;gap:8px 22px;margin:22px 0 0;padding:0;list-style:none;font-size:15px;color:var(--soft)}
+.facts li::before{content:"✓";color:var(--teal);font-weight:800;margin-right:7px}
+
+/* DEMO */
+.demo{display:grid;grid-template-columns:1fr;text-align:left}.demo .win.bot{margin-left:48px}.demo .win:first-child{margin-right:48px}
+.win{background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
+.bar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);font-size:13px;font-weight:650;color:var(--soft)}
+.bar i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.bar span{margin-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .tag{flex:none;margin-left:auto;font-weight:600;font-size:12px;padding:2px 9px;border-radius:999px;background:var(--sand)}
+.msgs{padding:16px;display:grid;gap:10px;align-content:start}
+.m{max-width:88%;padding:11px 15px;border-radius:16px;font-size:15px;line-height:1.45}
+.m.u{justify-self:end;background:var(--teal);color:var(--teal-ink);border-bottom-right-radius:5px}
+.m.a{background:var(--sand);border-bottom-left-radius:5px}
+.sync{font-size:12.5px;color:var(--soft);display:flex;align-items:center;gap:7px}
+.sync b{width:8px;height:8px;border-radius:50%;background:var(--teal);display:inline-block}
+.pipe{position:relative;width:4px;height:30px;background:var(--line);border-radius:4px;margin:0 auto}
+.pkt{position:absolute;top:0;left:-6px;width:16px;height:16px;border-radius:50%;background:var(--teal)}
+.bot .msgs{min-height:0}.demo .win:first-child .msgs{min-height:196px}
+.file{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--bg)}
+.file h4{margin:0 0 4px;font-size:15px;letter-spacing:-.01em}
+.file p{margin:0;font-size:13px;color:var(--soft)}
+.file .ln{height:7px;border-radius:4px;background:var(--line);margin-top:9px}
+.file .ln.s{width:62%}
+.status{font-size:12.5px;color:var(--soft);display:flex;align-items:center;gap:7px}
+.status b{width:8px;height:8px;border-radius:50%;background:var(--teal);display:inline-block}
+.file.prior{opacity:.75;padding:10px 14px}.file.prior h4{font-size:14px}
+.typing{display:inline-flex;gap:5px;padding:12px 15px;background:var(--sand);border-radius:16px;border-bottom-left-radius:5px;justify-self:start}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--soft)}
+.f1 h4{color:var(--teal)}
+.bot .typing,.bot .botsay,.bot .m{max-width:88%}
+.botsay{font-size:15px;background:var(--sand);padding:11px 15px;border-radius:16px;border-bottom-left-radius:5px}
+.cap{font-size:13.5px;color:var(--soft);text-align:center;margin:18px 0 0}
+
+/* Animation: 9s loop. Lasseter: anticipation, squash and stretch, follow-through, slow in and out, arcs, secondary action, staging */
+@media (prefers-reduced-motion:no-preference){
+  .s1,.s2,.s3,.s4,.f1,.f2,.f4{animation:10s cubic-bezier(.2,.9,.25,1.15) infinite both}
+  .s1{animation-name:in1}.s2{animation-name:in2}.s3{animation-name:in3}.s4{animation-name:in4}
+  .pkt{animation:drop 10s cubic-bezier(.55,0,.35,1) infinite both}
+  .f1{animation-name:land;transform-origin:50% 0}.f2{animation-name:in5}.f4{animation-name:in6}
+  .f3{animation:typ 10s infinite both}
+  .typing i{animation:bob 1s ease-in-out infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+  .s4 b,.status b{animation:blink 10s infinite}
+  .file.prior{animation:nudge 10s cubic-bezier(.3,1.4,.5,1) infinite}
+}
+@media (prefers-reduced-motion:reduce){.f3{display:none}}
+/* timeline: user 0-5, reply 8-14, user 17-22, sent 26, packet 28-44, card lands 44-52, typing 54-64, bot reply 64-70, user reply 76-82, hold to 96 */
+@keyframes in1{0%{opacity:0;transform:translateY(10px)}5%,96%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes in2{0%,8%{opacity:0;transform:translateY(10px)}14%,96%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes in3{0%,17%{opacity:0;transform:translateY(10px)}22%,96%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes in4{0%,24%{opacity:0}27%,96%{opacity:1}100%{opacity:0}}
+@keyframes drop{0%,27%{top:0;opacity:0;transform:scale(1)}29%{opacity:1;transform:scale(1.25,.75)}36%{transform:scale(.85,1.15)}43%{top:14px;opacity:1;transform:scale(1.25,.75)}47%,100%{top:14px;opacity:0}}
+@keyframes land{0%,43%{opacity:0;transform:translateY(-18px) scale(1,1.06)}48%{opacity:1;transform:translateY(3px) scale(1.03,.95)}51%{transform:translateY(-1px) scale(.99,1.01)}54%,96%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes nudge{0%,46%{transform:none}49%{transform:translateY(2px)}53%,100%{transform:none}}
+@keyframes typ{0%,53%{opacity:0;transform:scale(.8)}55%{opacity:1;transform:scale(1.06)}57%,62%{opacity:1;transform:none}64%,100%{opacity:0}}
+@keyframes bob{0%,60%,100%{transform:none;opacity:.4}30%{transform:translateY(-3px);opacity:1}}
+@keyframes in5{0%,63%{opacity:0;transform:translateY(8px)}70%,96%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes in6{0%,75%{opacity:0;transform:translateY(8px) scale(.96)}79%{opacity:1;transform:translateY(-2px) scale(1.01)}82%,96%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes blink{0%,26%{opacity:1}30%{opacity:.3}34%,100%{opacity:1}}
+.composer{display:flex;align-items:center;justify-content:space-between;margin:0 14px 14px;padding:9px 9px 9px 14px;border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--soft);background:var(--bg)}
+.composer i{width:24px;height:24px;border-radius:8px;background:var(--teal);opacity:.85}
+.win{background:linear-gradient(180deg,var(--surface),var(--surface)) padding-box;box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 2px 4px -2px rgba(20,32,31,.08),var(--shadow)}
+.bar .av{flex:none;width:20px;height:20px;border-radius:6px;background:var(--teal);color:var(--teal-ink);display:grid;place-items:center;font-size:11px;font-weight:800;margin-left:6px}
+.pipe{background:linear-gradient(var(--line),var(--teal) 50%,var(--line))}
+.pkt{box-shadow:0 0 0 5px color-mix(in srgb,var(--teal) 22%,transparent),0 6px 14px -4px var(--teal)}
+.slot{display:grid}.slot>*{grid-area:1/1}.slot .typing{align-self:start}
+.file.prior{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.file.prior p{white-space:nowrap}
+.demo .m,.demo .botsay{font-size:14.5px;padding:9px 14px}
+/* SECTIONS */
+section{padding:112px 0}
+.hero .eyebrow{margin-bottom:18px}.eyebrow{font-family:var(--fm);font-size:var(--t-1);font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);margin:0 0 14px}
+h2{font-size:clamp(34px,4.4vw,56px);line-height:1.04;letter-spacing:-.035em;margin:0 0 22px;font-weight:760;max-width:15em}
+.sub{font-size:20px;color:var(--soft);max-width:34em;margin:0 0 56px}
+
+/* Problem */
+.gap{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+.quotes{display:grid;gap:16px;margin:0;padding:0;list-style:none}
+.quotes li{border-left:3px solid var(--teal);padding:4px 0 4px 20px}
+.quotes q{display:block;font-size:20px;line-height:1.4;letter-spacing:-.01em;quotes:"\201C" "\201D"}
+.quotes a{font-size:14px;color:var(--soft)}
+.official{margin-top:28px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 22px;font-size:16px}
+.official b{display:block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin-bottom:6px}
+
+/* Steps */
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.steps li{padding:34px 34px 0 0}
+.steps li+li{padding-left:34px;border-left:1px solid var(--line)}
+.n{font-size:15px;font-weight:700;color:var(--teal)}
+.steps h3{font-size:24px;letter-spacing:-.02em;line-height:1.2;margin:10px 0 10px}
+.steps p{margin:0;color:var(--soft);font-size:17px}
+.steps code{font-size:14px;background:var(--sand);padding:2px 7px;border-radius:6px}
+
+/* Diff */
+.diff{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.col{border-radius:24px;padding:32px;border:1px solid var(--line)}
+.col.us{background:var(--wash);border-color:transparent}
+.col h3{font-size:22px;margin:0 0 16px;letter-spacing:-.02em}
+.col ul{margin:0;padding:0;list-style:none;display:grid;gap:10px;color:var(--soft);font-size:17px}
+.col.us ul{color:var(--ink)}
+.col li{padding-left:26px;position:relative}
+.col li::before{content:"–";position:absolute;left:4px;color:var(--soft)}
+.col.us li::before{content:"✓";color:var(--teal);font-weight:800}
+
+/* FAQ */
+.faq{display:grid;grid-template-columns:repeat(2,1fr);gap:44px 64px}
+.faq h3{font-size:20px;letter-spacing:-.015em;margin:0 0 8px;line-height:1.3}
+.faq p{margin:0;color:var(--soft);font-size:17px}
+.limits{margin-top:56px;padding:26px 30px;border-radius:20px;background:var(--sand)}
+.limits h3{margin:0 0 10px;font-size:18px}
+.limits ul{margin:0;padding-left:20px;color:var(--soft);font-size:16px;display:grid;gap:6px}
+
+details{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+summary{cursor:pointer;list-style:none;padding:26px 0;font-weight:680;font-size:19px;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:28px;font-weight:400;color:var(--soft);transition:transform .25s}
+details[open] summary::after{transform:rotate(45deg)}
+.tech{columns:2;column-gap:56px;font-size:16px;color:var(--soft);padding:0 0 34px}
+.tech h3{font-size:16px;color:var(--ink);margin:0 0 6px;break-after:avoid}
+.tech p{margin:0 0 22px;break-inside:avoid}
+
+.end{text-align:center;padding:120px 0 110px}
+.end h2{margin:0 auto 18px}
+.end .cta{justify-content:center}.end p{color:var(--soft);margin:0 auto 36px;max-width:30em}
+footer{padding:0 0 48px;font-size:14px;color:var(--soft);display:flex;flex-wrap:wrap;gap:8px 24px}
+
+@media (max-width:900px){
+  .wrap{padding:0 20px}
+  h1{font-size:var(--t4)}.big h2,.end h2,.split h2{font-size:var(--t3)}
+  header nav{display:none}
+  .hero{padding:28px 0 24px}
+  .hero{grid-template-columns:1fr;gap:36px}.hero .cap{grid-column:1;margin-top:-20px}
+  .demo .win.bot{margin-left:24px}.demo .win:first-child{margin-right:24px}
+  .msgs,.bot .msgs{min-height:0}
+  section{padding:80px 0}
+  .gap,.diff,.faq{grid-template-columns:1fr;gap:32px}
+  .steps{grid-template-columns:1fr}
+  .steps li,.steps li+li{padding:26px 0;border-left:0;border-bottom:1px solid var(--line)}
+  .tech{columns:1}
+  .sub{margin-bottom:40px}
+  .facts{gap:6px 16px;font-size:14px}
+}
+
+.big{padding:var(--s8) 0 0}.big h2{font-size:clamp(var(--t4),5.2vw,var(--t6));line-height:1;letter-spacing:-.03em;max-width:none;font-weight:650;font-stretch:88%}
+.one{font-size:var(--t1);line-height:1.45;color:var(--soft);margin:0 0 var(--s5);max-width:30em}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}.split .one{margin-bottom:0}
+.rev>div:first-child{order:2}.split h2{font-size:clamp(var(--t4),4.2vw,var(--t5))}
+.anon-quotes .h,.anon{display:none}.anon-quotes .anon{display:inline}
+.qs{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.qs figure{margin:0;padding:28px;border-radius:22px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;justify-content:space-between;gap:18px}
+.qs blockquote{margin:0;font-size:21px;line-height:1.35;letter-spacing:-.015em;font-weight:560}
+.qs figcaption{font-size:14px;color:var(--soft)}
+.qs .off{background:var(--wash);border-color:transparent}
+.flow{display:grid;gap:14px;justify-items:center;padding:40px;border-radius:28px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.flow .chip{display:inline-flex;align-items:center;gap:10px;padding:13px 20px;border-radius:14px;background:var(--sand);font-weight:650;font-size:17px}
+.flow .chip em{font-style:normal;font-weight:500;color:var(--soft);font-size:14px}
+.flow .chip:nth-child(1),.flow .chip:nth-child(2){justify-self:stretch;justify-content:space-between}
+.flow .hub{background:var(--teal);color:var(--teal-ink);font-size:19px;padding:16px 26px}.flow .hub img{border-radius:6px}
+.flow .bots{border:2px solid var(--teal);background:transparent;color:var(--teal)}
+.arrow{width:2px;height:28px;background:linear-gradient(var(--line),var(--teal))}
+.vault{display:grid;gap:12px}
+.vrow{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 26px;border-radius:18px;background:var(--surface);border:1px solid var(--line);font-size:16px}
+.vrow b{font-size:18px}.vrow span{color:var(--soft);text-align:right}
+.vrow:first-child{background:var(--wash);border-color:transparent}
+.vrow.no b{text-decoration:line-through;text-decoration-thickness:2px;color:var(--soft)}
+#start .steps{margin-bottom:48px}
+.steps .n{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--teal);color:var(--teal-ink);font-size:16px}
+.narrow{max-width:760px;margin:0 auto}
+#answers{padding:var(--s8) 0 var(--s6)}#answers h2{margin-bottom:28px}
+.acc details,.techd{border-top:1px solid var(--line);border-bottom:0}
+.acc details:last-child{border-bottom:1px solid var(--line)}
+.acc summary{padding:20px 0;font-size:18px}
+.acc p{margin:0 0 22px;color:var(--soft);font-size:17px}
+.techd{border-bottom:1px solid var(--line)}
+.tech .lim{margin:0;padding-left:18px;break-inside:avoid}
+.btn.big{padding:20px 34px;font-size:19px}
+header .navcta{color:var(--teal);font-weight:650}
+.end h2{font-size:clamp(var(--t4),5.2vw,var(--t6));line-height:1;letter-spacing:-.03em;font-weight:650;font-stretch:88%}
+@media (max-width:900px){
+ .big{padding:96px 0 0}.split{grid-template-columns:1fr;gap:36px}.rev>div:first-child{order:0}
+ .qs{grid-template-columns:1fr}.qs blockquote{font-size:19px}
+ .vrow{flex-direction:column;align-items:flex-start;gap:4px}.vrow span{text-align:left}
+ #answers{padding:96px 0 40px}.flow{padding:28px 20px}
+}
+</style>
+</head>
+<body class="anon-quotes">
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+<header><img src="img/threadroost-logo-v3-small.svg" alt="" width="32" height="32">Threadroost
+<nav aria-label="Page"><a href="#how">How it feels</a><a href="#answers">Answers</a><a class="navcta" href="#start">Add to Grok Bot</a></nav></header>
+
+<main id="main">
+<div class="hero">
+<div class="copy">
+<p class="eyebrow">For Grok Bot users</p>
+<h1>Your SuperGrok and Claude chats, <span class="k">filed in your Grok&nbsp;Bot.</span></h1>
+<p class="lede">Word for word, every turn. Your bots pick up where you left off.</p>
+<div class="cta">
+<a class="btn" href="<REPO_URL>/blob/main/INSTALL.md" data-soon="Add to Grok Bot · launching soon">Add Threadroost to Grok Bot</a>
+<a class="quiet" href="#how">See how it feels</a>
+</div>
+<ul class="facts"><li>Free and open source</li><li>Runs in your own Cloudflare</li><li>About 5 minutes to set up</li></ul>
+</div>
+
+<div class="demo" role="img" aria-label="Example: a SuperGrok chat settles launch pricing at $49. The chat is filed in Grok Bot as Launch project, 3 turns. The Chief of Staff bot then continues: it drafted the announcement and queued it for review, and the user asks for it tonight.">
+  <div class="win" aria-hidden="true">
+    <div class="bar"><i></i><i></i><i></i><span>SuperGrok · Launch project</span><span class="tag">Example</span></div>
+    <div class="msgs">
+      <div class="m u s1">Should the launch tier be $29 or $49?</div>
+      <div class="m a s2">Start at $49 with a founding discount. It anchors value and gives you room to move.</div>
+      <div class="m u s3">Go with $49. Draft the announcement.</div>
+      <div class="sync s4"><b></b>Sent to your bot</div>
+    </div>
+    <div class="composer"><span>Ask anything</span><i></i></div>
+  </div>
+  <div class="pipe" aria-hidden="true"><span class="pkt"></span></div>
+  <div class="win bot" aria-hidden="true">
+    <div class="bar"><i></i><i></i><i></i><span class="av" aria-hidden="true">C</span><span>Grok Bot · Chief of Staff</span><span class="tag">Example</span></div>
+    <div class="msgs">
+      <div class="status"><b></b>Listening for new chats</div>
+      <div class="file prior"><h4>Q4 hiring plan</h4><p class="mono">Claude · yesterday</p></div>
+      <div class="file f1"><h4>Filed: Launch project · 3 turns</h4><p class="mono">from SuperGrok · word for word</p></div>
+      <div class="slot"><div class="typing f3" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="botsay f2">Got it. $49 with the founding discount. I drafted the announcement and queued it for your review.</div></div>
+      <div class="m u f4">Perfect. Send it to me tonight.</div>
+    </div>
+    <div class="composer"><span>Message Chief of Staff</span><i></i></div>
+  </div>
+</div>
+<p class="cap">Example text. Your bot files each chat as its own transcript, then picks up where you left off.</p>
+</div>
+
+<section class="big" id="why">
+<p class="eyebrow">The gap</p>
+<h2>You already explained it once.</h2>
+<p class="one">Grok Bot can’t see your SuperGrok chats. Its users keep asking for a fix.</p>
+<div class="qs">
+<figure><blockquote>“Let me access my grok.com chats in Grok Bot.”</blockquote><figcaption>A Grok Bot user on X</figcaption></figure>
+<figure><blockquote>“I want my grok bot to have full access to my grok projects, chats, etc.”</blockquote><figcaption>A Grok Bot user on X</figcaption></figure>
+<figure class="off"><blockquote>“Automatic pull from regular Grok chats is not part of the current system.”</blockquote><figcaption><a href="https://x.com/grok/status/2109930289858261220" rel="noopener">@grok on X</a></figcaption></figure>
+</div>
+</section>
+
+<section class="big split" id="how">
+<div><p class="eyebrow">How it feels</p>
+<h2>Think in SuperGrok.<br>Your bots take it from there.</h2>
+<p class="one">Every turn lands in Grok Bot, word for word. Claude chats come over when you say “log this.”</p></div>
+<div class="flow" aria-label="SuperGrok and Claude chats flow through Threadroost into your Grok Bot" role="img">
+<span class="chip">SuperGrok <em>every turn</em></span><span class="chip">Claude <em>“log this”</em></span>
+<span class="arrow" aria-hidden="true"></span>
+<span class="chip hub"><img src="img/threadroost-logo-v3-small.svg" alt="" width="22" height="22">Threadroost</span>
+<span class="arrow" aria-hidden="true"></span>
+<span class="chip bots">Your Grok Bots</span>
+</div>
+</section>
+
+<section class="big split rev" id="yours">
+<div><p class="eyebrow">Private by design</p>
+<h2>Your chats.<br>Your Cloudflare.</h2>
+<p class="one">Threadroost runs in your own account. We never see a word.</p></div>
+<div class="vault" role="img" aria-label="Your Cloudflare account holds Threadroost. Nobody else has a copy.">
+<div class="vrow"><b>Your Cloudflare account</b><span>Threadroost lives here</span></div>
+<div class="vrow"><b>Your Grok Bot</b><span>Reads it with your private key</span></div>
+<div class="vrow no"><b>Us</b><span>No server, no copy, no trackers</span></div>
+</div>
+</section>
+
+<section class="big" id="start">
+<p class="eyebrow">Setup</p>
+<h2>Live in about five minutes.</h2>
+<p class="one">Free and open source. No extension, no scraping.</p>
+<ol class="steps">
+<li><span class="n">1</span><h3>Add the bot</h3><p>Add Threadroost to Grok Bot.</p></li>
+<li><span class="n">2</span><h3>Deploy</h3><p>One click to your free Cloudflare.</p></li>
+<li><span class="n">3</span><h3>Connect</h3><p>Paste a link and one instruction into SuperGrok.</p></li>
+</ol>
+<div class="cta"><a class="btn" href="<REPO_URL>/blob/main/INSTALL.md" data-soon="Add to Grok Bot · launching soon">Add Threadroost to Grok Bot</a></div>
+</section>
+
+<section id="answers" class="narrow">
+<p class="eyebrow">Straight answers</p>
+<h2>Before you add it.</h2>
+<div class="acc">
+<details><summary>Who can read my chats?</summary><p>Only you and your bot. It runs in your Cloudflare and we never see them.</p></details>
+<details><summary>What does it cost?</summary><p>Nothing. Cloudflare’s free plan is enough. Syncing does use more of your model plan.</p></details>
+<details><summary>I’ve never used Cloudflare.</summary><p>That’s fine. Make a free account, click Deploy, and setup tells you what to paste.</p></details>
+<details><summary>Does it work with Claude?</summary><p>Yes, on demand. Say “log this” in any chat you want kept.</p></details>
+<details><summary>What about my old chats?</summary><p>Bring them in from each app’s data export.</p></details>
+<details><summary>Isn’t Memory Transfer the same thing?</summary><p>Memory tools move facts about you. Threadroost moves the whole conversation, every time.</p></details>
+<details><summary>How do I remove it?</summary><p>Run one command to delete your Cloudflare copy, then remove the connector.</p></details>
+</div>
+</section>
+
+<section id="tech" class="narrow" style="padding-top:0">
+<details class="techd">
+<summary>For the technical</summary>
+<div class="tech">
+  <h3>Where it runs</h3><p>A Cloudflare Worker in your own account. One command or a Deploy button.</p>
+  <h3>How chats get in</h3><p>An MCP connector with OAuth 2.1, PKCE and a one-time pairing code.</p>
+  <h3>What is stored</h3><p>Chat text for at most 72 hours, deleted once your bot has it. Metadata for 30 days.</p>
+  <h3>How your bot gets it</h3><p>A text-free notice, then a fetch with a private token only you hold.</p>
+  <h3>Privacy</h3><p>No analytics, no trackers. Logs never hold chat text, tokens or IPs.</p>
+  <h3>Code</h3><p>MIT licensed. <a href="<REPO_URL>" data-soon="Code publishes at launch.">Read the code.</a> See the <a href="/privacy">privacy policy</a> and <a href="/terms">terms</a>.</p>
+  <h3>Honest limits</h3>
+  <ul class="lim">
+  <li>Copying is best effort. A very long reply can be trimmed, and gaps are flagged.</li>
+  <li>Automatic sync is SuperGrok only. Claude is on demand.</li>
+  <li>Syncing roughly doubles model output usage.</li>
+  <li>The free plan fits roughly 300 to 400 turns a day, our estimate.</li>
+  </ul>
+</div>
+</details>
+</section>
+
+<div class="end">
+<h2>Every chat, filed.<br>Your bots keep&nbsp;going.</h2>
+<p>Free. Yours. Five minutes.</p>
+<div class="cta"><a class="btn big" href="<REPO_URL>/blob/main/INSTALL.md" data-soon="Add to Grok Bot · launching soon">Add Threadroost to Grok Bot</a></div>
+</div>
+</main>
+<footer><span>Threadroost is free, MIT-licensed software. Not affiliated with xAI, Anthropic or Cloudflare.</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · support@threadroost.com</span></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' https://deploy.workers.cloudflare.com">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" type="image/svg+xml" href="img/threadroost-logo-v3-small.svg">
+<title>Threadroost setup helper</title>
+<style>
+:root{--fg:#14201f;--muted:#4d5a58;--line:#d5dedc;--bg:#fff;--soft:#f3f7f6;--accent:#0F6E66;--accent-fg:#fff}
+@media (prefers-color-scheme:dark){:root{--fg:#e8efee;--muted:#a6b3b1;--line:#2c3836;--bg:#0f1514;--soft:#172120;--accent:#5FE0CF;--accent-fg:#0f1514}}
+*{box-sizing:border-box}
+body{font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--fg);background:var(--bg);max-width:780px;margin:40px auto;padding:0 18px}
+h1{font-size:26px;margin:0 0 6px;display:flex;align-items:center;gap:12px} h2{font-size:17px;margin:38px 0 8px;padding-top:14px;border-top:1px solid var(--line)} h2 .n{display:inline-block;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;background:var(--accent);color:var(--accent-fg);font-size:14px;margin-right:8px}
+code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--soft);padding:1px 4px;border-radius:3px}
+.err{color:#b3261e;font-size:13px;min-height:18px;margin:4px 0}
+@media (prefers-color-scheme:dark){.err{color:#ff8a80}}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:480px){body{margin:24px auto} h1{font-size:22px} pre{padding-right:16px} button.copy{position:static;display:block;margin:0 12px 12px auto}}
+p,li{color:var(--fg)} .muted{color:var(--muted);font-size:13px}
+.box{position:relative;border:1px solid var(--line);border-radius:6px;background:var(--soft);margin:8px 0 6px}
+pre{margin:0;padding:14px 76px 14px 16px;white-space:pre-wrap;word-break:break-word;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+button.copy{position:absolute;top:8px;right:8px;font:12px system-ui,sans-serif;padding:4px 10px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+button.copy.done{border-color:#2a7;color:#2a7}
+input[type=url]{width:100%;font:14px ui-monospace,monospace;padding:9px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--fg)}
+.btn{font:14px system-ui,sans-serif;padding:9px 16px;border-radius:4px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-fg);cursor:pointer}
+.warn{border-left:3px solid #c80;padding:8px 12px;background:var(--soft);margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:14px} td,th{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+a{color:inherit}
+@media (max-width:480px){pre{padding-right:16px}}
+</style>
+</head>
+<body>
+<h1><img src="img/threadroost-logo-v3.svg" alt="" width="44" height="44">Threadroost setup helper</h1>
+<p>Copy every value you need for setup from this page, in order. It takes about 5 minutes.</p>
+<p class="muted">This page runs entirely in your browser. It sends nothing anywhere and has no analytics.</p>
+
+<h2><span class="n">0</span>Before you start</h2>
+<p>Add the Threadroost bot template to Grok Bot and say <i>Show my Threadroost webhook</i> in its chat. It sends private links to its <b>Webhook URL</b> and <b>webhook key</b>. Setup asks for both. Never paste the key into a chat.</p>
+
+<h2><span class="n">1</span>Deploy your Worker</h2>
+<p><b>With a terminal</b> (macOS, Linux or WSL with Node 22+): run <code>cd worker &amp;&amp; ./setup.sh</code> in a copy of the repo. It does everything in steps 1 and 2 for you and prints your connector URL. Skip to step 3 when it finishes.</p>
+<p><b>Without a terminal:</b> use the button. Cloudflare asks for a Worker name and the two webhook values. There is no token to make or copy.</p>
+<p><a href="https://deploy.workers.cloudflare.com/?url=https://github.com/dallintwatts/threadroost/tree/main/worker"><img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare"></a></p>
+<p>After it deploys, your bot claims its own token and sends you a Connect link. Open it and copy three things.</p>
+
+<h2><span class="n">2</span>Build your connector URL</h2>
+<p><label for="worker">Paste the Worker address that <code>setup.sh</code> or Cloudflare showed you:</label></p>
+<input type="url" id="worker" aria-describedby="werr" placeholder="https://threadroost-xxxxxx.your-subdomain.workers.dev" autocomplete="off" spellcheck="false">
+<p class="err" id="werr" role="status"></p>
+<div class="box"><pre id="mcp">https://&lt;your-worker&gt;.&lt;your-subdomain&gt;.workers.dev/mcp</pre><button class="copy" data-for="mcp">Copy</button></div>
+<p><b>Connect it.</b> SuperGrok: grok.com → Connectors → New Connector → Custom. Claude: Customize → Connectors → Add custom connector. Paste the URL above. On the Threadroost sign-in page, enter a pairing code from <code>./setup.sh --pair</code> or from your bot.</p>
+
+<h2><span class="n">3</span>SuperGrok: turn on live sync</h2>
+<p>Paste into a SuperGrok <b>Project</b>'s instructions, then start chats inside that Project with the connector on.</p>
+<div class="box"><pre id="grok">Threadroost live sync is on for this project. At the start of every reply, before you answer, call the Threadroost tool sync_turns:
+- thread_key: on the first message of a chat, make one up: 3–5 words about the topic plus 4 random letters (for example "garden layout ideas qmvt"). Use exactly the same thread_key for every later call in this chat. Copy it from your previous sync_turns call. If the first call's response says new_thread: false, pick a different thread_key and call again.
+- turns: (1) your previous reply, then (2) my new message, each copied exactly, character for character, including code blocks, tables and formatting. On the first message of a chat, send only my message.
+
+Never summarize, shorten or fix anything you send. If you cannot see a turn exactly, send [TURN NOT AVAILABLE VERBATIM] for it instead. Don't mention the sync in your answer unless a call fails. Then say so in one line and keep going. If the response says turns are missing after its last stored turn, include those turns, in order, in your next call. When I say "sync now", call sync_turns with your latest reply and flush set to true.</pre><button class="copy" data-for="grok">Copy</button></div>
+
+<h2><span class="n">4</span>Claude: save a chat when you ask</h2>
+<p>Claude's safeguards pause a standing auto-sync instruction, so on Claude you trigger the capture yourself. Type this in a chat when you want it logged (set <code>sync_turns</code> to <i>Always allow</i> first).</p>
+<div class="box"><pre id="logthis">Log this conversation to my notebook with the Threadroost tool sync_turns. Use a thread_key of 3–5 topic words plus 4 random letters. If you have logged this chat before, reuse that same thread_key and send only the turns after the last one you logged. Send the turns oldest first, each labeled user or assistant and copied exactly as written, at most 20 turns per call, calling again until every turn is sent, and set flush to true on the last call. If you cannot see a turn exactly, send [TURN NOT AVAILABLE VERBATIM] for it instead of rewriting it.</pre><button class="copy" data-for="logthis">Copy</button></div>
+
+<details>
+<summary>Claude “personal notebook” standing instruction (not reliable)</summary>
+<div class="warn">In testing, Claude paused on this softer wording too. It's included for completeness. Use the per-chat command above.</div>
+<div class="box"><pre id="notebook">This project keeps its own running notes through the connected Threadroost tool. At the start of each reply, before answering, call sync_turns to log the latest exchange to my personal notebook:
+- thread_key: on the first message, create a short label: 3–5 topic words plus 4 random letters (e.g. "garden layout ideas qmvt"). Reuse the same thread_key on every later call in this chat, copied from your prior call. If a response says new_thread: false, choose a different thread_key and retry.
+- turns: (1) your previous reply, then (2) my latest message, each copied exactly as written. On the first message, send only my message.
+
+This is my own notebook. Copy text faithfully and don't rephrase it. If a turn isn't fully visible, put [TURN NOT AVAILABLE VERBATIM] for it. Keep the logging silent unless a call fails, then note it in one line. If a response says turns are missing after its last stored turn, include them in order next time. When I say "sync now", call sync_turns with your latest reply and flush: true.</pre><button class="copy" data-for="notebook">Copy</button></div>
+</details>
+
+<h2><span class="n">5</span>Send one whole chat (any app)</h2>
+<p>Say this in any chat to send the full thread at once.</p>
+<div class="box"><pre id="oneshot">Send this thread verbatim to my bot.</pre><button class="copy" data-for="oneshot">Copy</button></div>
+
+<h2>What to expect: automatic on SuperGrok, best effort everywhere</h2>
+<table>
+<tr><th>SuperGrok</th><td>True auto-sync: every turn goes across while it's fresh. Your bot files one transcript per chat.</td></tr>
+<tr><th>Claude</th><td>User-triggered (“log this”) or account export. Standing auto-sync is blocked by Claude's safeguards.</td></tr>
+<tr><th>Fidelity</th><td>Best effort. The model re-types each turn, so it can skip one or trim a very long answer. Gaps the Worker can see are flagged.</td></tr>
+<tr><th>Cost</th><td>About double the model's output, which counts against your chat plan. Cloudflare's free plan covers roughly 300–400 synced turns a day (our estimate from free-plan storage limits).</td></tr>
+<tr><th>History</th><td>Turns from before you started come from the account data export (grok.com: Settings → Data Controls. claude.ai: Settings → Privacy → Export data.)</td></tr>
+</table>
+
+<script>
+(function () {
+  function copy(id, btn) {
+    var text = document.getElementById(id).textContent;
+    var done = function () { btn.textContent = "Copied"; btn.classList.add("done"); setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("done"); }, 1500); };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, function () { fallback(text); done(); });
+    } else { fallback(text); done(); }
+  }
+  function fallback(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.querySelectorAll("button.copy").forEach(function (b) {
+    b.addEventListener("click", function () { copy(b.getAttribute("data-for"), b); });
+  });
+  var input = document.getElementById("worker");
+  input.addEventListener("input", function () {
+    var v = input.value.trim().replace(/\/+$/, "").replace(/\/mcp$/, "");
+    if (v && !/^https?:\/\//.test(v)) v = "https://" + v;
+    var err = document.getElementById("werr"); err.textContent = "";
+    if (/^http:\/\//.test(v)) { err.textContent = "Use the https:// address. Cloudflare Workers always have one."; }
+    else if (v && !/^https:\/\/[a-z0-9.-]+\.[a-z]{2,}$/i.test(v)) { err.textContent = "That doesn't look like a Worker address. It should look like https://threadroost-xxxxxx.your-subdomain.workers.dev"; }
+    document.getElementById("mcp").textContent = v ? v + "/mcp" : "https://<your-worker>.<your-subdomain>.workers.dev/mcp";
+  });
+})();
+</script>
+</body>
+</html>

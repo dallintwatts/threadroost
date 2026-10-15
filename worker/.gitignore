@@ -1,0 +1,6 @@
+node_modules/
+.wrangler/
+.dev.vars
+.env
+# setup.sh state: pull token (0600), deploy output, chosen account/name. Never commit.
+.courier/

@@ -1,0 +1,56 @@
+# courier-inbox routine (webhook-triggered) — Threadroost v1.2.2
+
+Trigger: incoming webhook. This routine's own Webhook URL and key are what the owner enters into setup.
+Files and memory used: `<your agent folder>/courier/` holding `intake.py`, `config.json` and `pull_token` (never print it), and memory `threadroost_intake_dir`.
+
+## Owner asks for the webhook URL and key ("Show my Threadroost webhook")
+The Grok Bot app does not show a routine's Webhook URL or key in the Routines pane. Reply with the app's private
+in-chat links to this routine's **Webhook URL** and **webhook key** fields (you can link to them, not read them), and say:
+"Open each link and copy the value. Paste the key only into setup's hidden prompt or Cloudflare's secret field."
+Never print either value yourself, and never ask the owner to paste the key (or any token) into a chat.
+If the owner pastes a key into chat anyway, tell them it is now exposed and offer to rotate it (make a new webhook key),
+then have them run `./setup.sh --reset-webhook`.
+
+## Catch-up (runs on every webhook wake, before handling the event)
+On every webhook wake, whatever the event, first run the intake below once. That files any handoff that was delivered
+but never acked (for example after a failed run), so nothing waits for the next real handoff.
+
+## Companion routine: `threadroost-catchup` (scheduled, every 10 minutes)
+Install a second routine on a schedule (every 10 minutes) that runs only the intake below. Skip silently when
+`threadroost_intake_dir` isn't saved yet or `/api/handoffs` returns an empty list. Never post when there was nothing to file.
+Both routines need the owner's approval once. When you create them, tell the owner: "Please approve the routine card now,
+setup waits on it."
+
+On each webhook payload, read `event`:
+
+## event = "threadroost.claim"
+1. POST `claim_url` with JSON `{"code": claim_code}` (within 15 minutes, once only).
+2. 200 → install the intake in your own agent folder, `<your agent folder>/courier/` (create it):
+   follow the **threadroost-intake** skill's Install steps. It carries `intake.py` inside it, so it writes `intake.py`
+   (sha256-checked), `pull_token` and `config.json` into that folder, dry-runs it, and saves the folder as memory
+   `threadroost_intake_dir`. Never look for intake.py anywhere else.
+   410 `already_claimed` → tell the owner: "Your Worker was already claimed. If that wasn't you, run ./setup.sh --reclaim." Stop.
+   410 `claim_expired` / 401 → tell the owner to run `./setup.sh --reclaim`. Stop.
+3. Post the `connect_url` **from the claim response** in this chat, once:
+   "Threadroost is connected. Open this link to finish (works once, 15 minutes): <connect_url>".
+   Do not call `/api/connect-link` after a claim. The claim already made the one live link, and asking for another
+   replaces it, so the link you just posted would stop working.
+
+## Owner asks for a new Connect link / pairing code
+Only when the owner asks (for example the link expired, or a sign-in failed and used up the code):
+POST `<worker_url>/api/connect-link` with header `Authorization: Bearer <pull_token>` (both from `<threadroost_intake_dir>`). Post the returned `connect_url` once.
+If the owner asks again within 5 minutes the Worker returns the same unused link (`reused: true`), which is expected.
+Add `?fresh=1` only when the owner says the current link already failed. Tell the owner: "The pairing code on that
+page works once. If the sign-in fails after you enter it, ask me for a new link."
+
+## Intake: event = "handoff_ready", every webhook wake, and `threadroost-catchup`
+Follow the threadroost-intake skill's Run steps: on `handoff_ready`, `python3 <threadroost_intake_dir>/intake.py drain --id <handoff_id>` and then `drain`. Otherwise just `drain`.
+Plain `drain` lists pending handoffs, checks every checksum, files each one under
+`handoffs_root`, and acks it. It prints one JSON line. Report only handoffs it filed, and say nothing when `processed` is 0.
+(intake.py calls GET `/api/handoffs`, GET `/api/handoffs/<id>` and POST `/api/handoffs/<id>/ack` with the Bearer pull token.)
+If it fails with a missing `config.json` or `pull_token`, reinstall from the skill if you still have the token, otherwise tell the owner once: "My Threadroost intake isn't set up. Run ./setup.sh --reclaim."
+Only sealed handoffs are listed. Ignore open handoffs, including empty ones (started with zero turns): the Worker
+deletes empty open handoffs after about an hour, so never tell the owner about them or ask them to finish one.
+
+## event = "probe" (setup's webhook test) or any unknown event
+Run the catch-up intake only. Post nothing.

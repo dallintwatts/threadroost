@@ -1,0 +1,9 @@
+# Secrets for the Worker. The Deploy to Cloudflare button reads this file and asks for each value.
+# setup.sh sets the same values with `wrangler secret put` (values are piped, never echoed).
+# For local `wrangler dev` you may copy this to .dev.vars (git-ignored); never commit real values.
+
+# Webhook URL of your bot's courier-inbox routine (routine panel -> Webhook URL).
+GROKBOT_WEBHOOK_URL=https://example.invalid/your-routine-webhook-url
+# Webhook key from the same routine panel (sent as Bearer + X-Automation-Key).
+GROKBOT_WEBHOOK_KEY=paste-the-routine-webhook-key
+# No pull token needed: the Worker makes its own on first visit and your bot claims it through a one-time link.

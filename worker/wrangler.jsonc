@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // The Worker name becomes part of your URL: https://<name>.<your-subdomain>.workers.dev
+  // setup.sh offers a neutral name with a random suffix on first run; the Deploy button lets you pick one.
+  "name": "threadroost",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-11",
+  // global_fetch_strictly_public: the webhook always goes out over the public internet. Without it, a webhook that points
+  // at another Worker on your own Cloudflare account answers 404. See SECURITY-SETUP-NOTES.md for the decision table.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "preview_urls": false,
+  // Persistent Workers Logs stay off: the Worker never logs content, but you hold your own data.
+  "observability": { "enabled": false },
+  "vars": {
+    // Redirect hosts allowed for OAuth clients (host or any subdomain): grok.com connectors.
+    "ALLOWED_REDIRECT_HOSTS": "grok.com,x.ai",
+    // Exact URIs only (no wildcards). Claude's hosted connector callback; Claude Code's localhost stays blocked.
+    "ALLOWED_REDIRECT_URIS": "https://claude.ai/api/mcp/auth_callback",
+    // Counts started handoffs plus live-sync threads (each thread once per UTC day).
+    "MAX_HANDOFFS_PER_DAY": "20",
+    "SYNC_NOTIFY_INTERVAL_SECONDS": "600",
+    "SYNC_FLUSH_MIN_SECONDS": "60",
+    "SYNC_MAX_CALLS_PER_THREAD_PER_DAY": "300"
+  },
+  // Flush live-sync threads that went quiet, so the last turns reach the bot within ~10-20 min.
+  "triggers": { "crons": ["*/10 * * * *"] },
+  // OAuth state + buffered turns. No "id" on purpose: setup.sh creates the namespace and writes its id here;
+  // the Deploy to Cloudflare button (and plain `wrangler deploy`) provisions it automatically.
+  "kv_namespaces": [
+    { "binding": "OAUTH_KV" }
+  ]
+}

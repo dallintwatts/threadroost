@@ -1,0 +1,57 @@
+{
+  "name": "threadroost-worker",
+  "version": "1.2.2",
+  "description": "Threadroost: a self-hosted MCP connector that hands grok.com and claude.ai conversations to your own bot.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "setup": "bash setup.sh",
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --test-concurrency=1 test/local.test.mjs test/sync.test.mjs test/claim.test.mjs test/bugfix.test.mjs test/loop.test.mjs",
+    "test:setup": "node --test test/setup.test.mjs test/docs.test.mjs",
+    "preflight": "node test/remote-preflight.mjs"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "1.2.3",
+    "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/server": "2.0.0",
+    "agents": "0.27.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261007.1",
+    "typescript": "5.9.3",
+    "wrangler": "4.148.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "cloudflare": {
+    "label": "Threadroost",
+    "products": [
+      "Workers",
+      "KV"
+    ],
+    "categories": [
+      "ai"
+    ],
+    "bindings": {
+      "OAUTH_KV": {
+        "description": "Stores OAuth state and buffered turns (text is deleted when your bot acknowledges it, and expires after 72 h). Created automatically; keep the suggested name."
+      },
+      "GROKBOT_WEBHOOK_URL": {
+        "description": "The **Webhook URL** of your bot's `courier-inbox` routine. In your bot's chat, say \"Show my Threadroost webhook\" and open the URL link it sends."
+      },
+      "GROKBOT_WEBHOOK_KEY": {
+        "description": "The **webhook key**, from the second link your bot sends. Treat it like a password and never paste it into a chat."
+      },
+      "COURIER_PULL_TOKEN": {
+        "description": "A random string of at least 32 characters that your bot uses to pull handoffs. Generate one with `openssl rand -hex 32` (or the generator on the setup page) and **keep a copy for your bot**."
+      }
+    }
+  }
+}
