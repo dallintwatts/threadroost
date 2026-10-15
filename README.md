@@ -115,6 +115,11 @@ Two ways to send:
 - **Live sync** (`sync_turns`): a standing Project instruction makes the model send [its previous reply, your new
   message] at the start of every reply. The server assigns turn order, drops re-sent duplicates, flags likely gaps, and
   notifies your bot at most once per 10 minutes per thread (a cron flushes quiet threads).
+- **Failure alerts:** every 10 minutes the cron checks for a finished chat that hasn't reached your bot within 30 minutes,
+  or 3 or more failed messages to your bot in a row. Either one sends your bot a single `threadroost.alert`, at most once
+  an hour, and never twice for the same problem in a day. Your bot tells you in plain words. The alert carries counts
+  only, no titles, chat text or keys. Because the bot also checks for alerts on its 10-minute catch-up run, you still hear
+  about it when webhooks are the thing that's broken.
 - **One-shot handoff** (`start_handoff` → `append_turns` → `finish_handoff`): the whole thread at once. Older turns the
   model can no longer see arrive as `[TURN NOT AVAILABLE VERBATIM]`.
 
@@ -151,6 +156,7 @@ registered redirect URI, so Grok and Claude threads are filed separately.
 | `POST /api/admin/revoke-all` | Revoke every client and grant |
 | `GET /api/admin/dcr-log` | Last 20 dynamic-registration attempts |
 | `POST /api/admin/probe-webhook` | Send `{"event":"probe"}` through the webhook path |
+| `GET /api/admin/alert` | Last failure alert (counts and plain-words message only) and the current run of failed webhooks |
 
 ## Repo layout
 
