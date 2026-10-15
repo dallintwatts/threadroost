@@ -217,12 +217,6 @@ footer{padding:0 0 48px;font-size:14px;color:var(--soft);display:flex;flex-wrap:
 .one{font-size:var(--t1);line-height:1.45;color:var(--soft);margin:0 0 var(--s5);max-width:30em}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}.split .one{margin-bottom:0}
 .rev>div:first-child{order:2}.split h2{font-size:clamp(var(--t4),4.2vw,var(--t5))}
-.anon-quotes .h,.anon{display:none}.anon-quotes .anon{display:inline}
-.qs{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.qs figure{margin:0;padding:28px;border-radius:22px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;justify-content:space-between;gap:18px}
-.qs blockquote{margin:0;font-size:21px;line-height:1.35;letter-spacing:-.015em;font-weight:560}
-.qs figcaption{font-size:14px;color:var(--soft)}
-.qs .off{background:var(--wash);border-color:transparent}
 .flow{display:grid;gap:14px;justify-items:center;padding:40px;border-radius:28px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
 .flow .chip{display:inline-flex;align-items:center;gap:10px;padding:13px 20px;border-radius:14px;background:var(--sand);font-weight:650;font-size:17px}
 .flow .chip em{font-style:normal;font-weight:500;color:var(--soft);font-size:14px}
@@ -250,19 +244,18 @@ header .navcta{color:var(--teal);font-weight:650}
 .end h2{font-size:clamp(var(--t4),5.2vw,var(--t6));line-height:1;letter-spacing:-.03em;font-weight:650;font-stretch:88%}
 @media (max-width:900px){
  .big{padding:96px 0 0}.split{grid-template-columns:1fr;gap:36px}.rev>div:first-child{order:0}
- .qs{grid-template-columns:1fr}.qs blockquote{font-size:19px}
- .demo .s1,.demo .s2,.demo .composer{display:none}.demo .win:first-child .msgs{min-height:0}.hero{gap:0}.hero .copy{display:contents}.hero .demo{order:1;margin-top:22px}.hero .pipe{height:18px}.hero .bot .msgs{padding-top:12px}.hero .cap{order:2;margin-top:14px}.hero .facts{order:3}.hero .cta .quiet{display:none}.hero .lede{font-size:19px}.hero .eyebrow{margin-bottom:12px}.hero{padding-top:16px}.lede{margin-bottom:26px}.facts{margin-top:18px}
+  .demo .s1,.demo .s2,.demo .composer{display:none}.demo .win:first-child .msgs{min-height:0}.hero{gap:0}.hero .copy{display:contents}.hero .demo{order:1;margin-top:22px}.hero .pipe{height:18px}.hero .bot .msgs{padding-top:12px}.hero .cap{order:2;margin-top:14px}.hero .facts{order:3}.hero .cta .quiet{display:none}.hero .lede{font-size:19px}.hero .eyebrow{margin-bottom:12px}.hero{padding-top:16px}.lede{margin-bottom:26px}.facts{margin-top:18px}
  .demo .file.prior,.demo .bot .bar .av,.demo .bot .status{display:none}
  .vrow{flex-direction:column;align-items:flex-start;gap:4px}.vrow span{text-align:left}
  #answers{padding:96px 0 40px}.flow{padding:28px 20px}
 }
 </style>
 </head>
-<body class="anon-quotes">
+<body>
 <a class="skip" href="#main">Skip to content</a>
 <div class="wrap">
 <header><img src="img/threadroost-logo-v3-small.svg" alt="" width="32" height="32" fetchpriority="high">Threadroost
-<nav aria-label="Page"><a href="#how">How it feels</a><a href="#answers">Answers</a><a class="navcta" href="#start">Add to Grok Bot</a></nav></header>
+<nav aria-label="Page"><a href="#how">How it feels</a><a href="#answers">Answers</a><a class="navcta" href="#start">Install</a></nav></header>
 
 <main id="main">
 <div class="hero">
@@ -271,8 +264,8 @@ header .navcta{color:var(--teal);font-weight:650}
 <h1>Your SuperGrok and Claude chats, <span class="k">filed in your Grok&nbsp;Bot,</span> word for&nbsp;word.</h1>
 <p class="lede">Every turn becomes a transcript your bots can read. They pick up where you left off.</p>
 <div class="cta">
-<a class="btn" href="<REPO_URL>/blob/main/INSTALL.md" data-soon="Add to Grok Bot · launching soon">Add Threadroost to Grok Bot</a>
-<a class="quiet" href="#how">See how it feels</a>
+<a class="btn" href="<REPO_URL>/blob/main/INSTALL.md" data-soon="Install guide · launching soon">See how to install</a>
+<a class="quiet" href="#how">How it feels</a>
 </div>
 <ul class="facts"><li>Free and <a href="<REPO_URL>" data-soon="open source">open source</a></li><li>Runs in your own Cloudflare</li><li>About five minutes to set up</li></ul>
 </div>
@@ -304,17 +297,6 @@ header .navcta{color:var(--teal);font-weight:650}
 </div>
 <p class="cap">Example text. Your bot files each chat as its own transcript, then picks up where you left off.</p>
 </div>
-
-<section class="big" id="why">
-<p class="eyebrow">The gap</p>
-<h2>You already explained it once.</h2>
-<p class="one">Grok Bot can’t see your SuperGrok chats. Its users keep asking for a fix.</p>
-<div class="qs">
-<figure><blockquote>“Let me access my grok.com chats in Grok Bot.”</blockquote><figcaption>A Grok Bot user on X</figcaption></figure>
-<figure><blockquote>“I want my grok bot to have full access to my grok projects, chats, etc.”</blockquote><figcaption>A Grok Bot user on X</figcaption></figure>
-<figure class="off"><blockquote>“Automatic pull from regular Grok chats is not part of the current system.”</blockquote><figcaption><a href="https://x.com/grok/status/2109930289858261220" rel="noopener">@grok on X</a></figcaption></figure>
-</div>
-</section>
 
 <section class="big split" id="how">
 <div><p class="eyebrow">How it feels</p>
@@ -349,7 +331,7 @@ header .navcta{color:var(--teal);font-weight:650}
 <li><span class="n">2</span><h3>Deploy</h3><p>One click to your free Cloudflare.</p></li>
 <li><span class="n">3</span><h3>Connect</h3><p>Paste a link and one instruction into SuperGrok.</p></li>
 </ol>
-<div class="cta"><a class="btn" href="<REPO_URL>/blob/main/INSTALL.md" data-soon="Add to Grok Bot · launching soon">Add Threadroost to Grok Bot</a></div>
+<div class="cta"><a class="btn" href="<REPO_URL>/blob/main/INSTALL.md" data-soon="Install guide · launching soon">See how to install</a></div>
 </section>
 
 <section id="answers" class="narrow">
@@ -381,7 +363,7 @@ header .navcta{color:var(--teal);font-weight:650}
   <li>Copying is best effort. A very long reply can be trimmed, and gaps are flagged.</li>
   <li>Automatic sync is SuperGrok only. Claude is on demand.</li>
   <li>Syncing roughly doubles model output usage.</li>
-  <li>The free plan fits roughly 300 to 400 turns a day, our estimate.</li>
+  <li>Cloudflare’s free plan allows 1,000 storage writes a day, and every synced turn uses some. Heavy use can need Workers Paid.</li>
   </ul>
 </div>
 </details>
@@ -390,7 +372,7 @@ header .navcta{color:var(--teal);font-weight:650}
 <div class="end">
 <h2>Every chat, filed.<br>Your bots keep&nbsp;going.</h2>
 <p>Free. Yours. Five minutes.</p>
-<div class="cta"><a class="btn big" href="<REPO_URL>/blob/main/INSTALL.md" data-soon="Add to Grok Bot · launching soon">Add Threadroost to Grok Bot</a></div>
+<div class="cta"><a class="btn big" href="<REPO_URL>/blob/main/INSTALL.md" data-soon="Install guide · launching soon">See how to install</a></div>
 </div>
 </main>
 <footer><span>Threadroost is free, MIT-licensed software. Not affiliated with xAI, Anthropic or Cloudflare.</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:support@threadroost.com">support@threadroost.com</a></span></footer>
