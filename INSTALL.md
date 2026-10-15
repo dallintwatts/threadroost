@@ -145,6 +145,7 @@ Say **"sync now"** before you walk away to push the last reply immediately. Othe
 | Claude or grok.com says the redirect isn't allowed | Ask your bot to show the connector's registration log (`GET /api/admin/dcr-log`). It shows which address the app tried. Include that line when you ask for help (see Support below) |
 | Webhook test failed | Read the line under it, "Your bot replied: ...". Busy or rate limited: wait a few minutes, then run `./setup.sh --no-deploy`. Paused: approve the `courier-inbox` routine card in the bot's chat. Anything else: ask your bot "Show my Threadroost webhook", re-copy both values, then run `./setup.sh --reset-webhook`. Handoffs queue safely meanwhile |
 | "More than one account" | Choose when asked, or export `CLOUDFLARE_ACCOUNT_ID` |
+| Your bot says "Threadroost needs a look" | A finished chat hasn't reached your bot for 30 minutes, or several messages to it failed in a row. Open the bot, check that its `courier-inbox` routine is on and approved, then run `./setup.sh --doctor`. Waiting chats stay on your Worker for up to 72 hours |
 | Free plan cron limit reached | Each account has a few scheduled-job slots. Free one up, or remove `triggers` from `wrangler.jsonc` (quiet threads then send on the next turn or "sync now") |
 | grok.com doesn't see `sync_turns` after an update | Refresh the connector, or remove and re-add it |
 

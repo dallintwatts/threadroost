@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased (2026-10-15)
+- Alerts (TR-ALERT-1): the 10-minute cron sends your bot one `threadroost.alert` when a finished chat hasn't reached it within 30 minutes, or 3 or more webhooks in a row failed. It sends at most one an hour and doesn't repeat a delivered alert for the same problem within a day. The alert holds counts and ids only. The intake also reads `GET /api/admin/alert` on every catch-up run and shows each alert once in plain words, so alerts arrive even when webhooks are down.
+- Isolation (TR-STATE-1): removed the per-isolate client-source cache and the cached OAuth provider (it kept the first request's env). The rate limiter evicts its oldest key instead of wiping every limit. A test pins the only two allowed in-memory maps.
+- Added `.cursor/BUGBOT.md` review rules.
+- Fix (TR-CI-6): removed a `worker/node_modules` symlink committed by mistake in ce31dab. It pointed a fresh clone's `npm ci` at a folder outside the clone. `.gitignore` now ignores `node_modules` as a file too, and a test checks it.
 - Fix (TR-BUG-33): handoff_ready webhooks now carry `delivery_id` and `attempt`. The bot intake keeps a ledger keyed on handoff id plus delivery id, under a file lock. A repeat or re-claim of a handoff already filed returns `already_filed` with its path instead of logging a false duplicate, and re-acks with the original verdict when the first ack was lost.
 - Security (TR-SEC-1): handoff text is treated as untrusted data in the inbox routine and the skill. Each turn is fenced in transcript.md so it cannot forge headings, and the intake refuses malformed handoff and delivery ids.
 - Setup (TR-CI-1..4, clean-install test): a busy bot's HTTP 400 on the webhook test is retried once after 20 seconds, and a lasting failure shows the bot's reply and what to do next. README quick start shows the clone command, its INSTALL link points at step 3 again, and the rotate and remove lines match setup.sh.

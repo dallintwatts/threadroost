@@ -32,7 +32,8 @@ description: Install and run the Threadroost intake that files handed-off chats.
 - A repeat notice returns `already_filed` with the existing path. That is success, not a new filing or a duplicate.
   (A brand-new handoff can take up to about a minute to appear in the Worker's list, but fetching it by id works at once.)
 - On a schedule or any other wake: `python3 <threadroost_intake_dir>/intake.py drain`.
-- It prints one JSON line. Report only what it filed new (`already_filed` results are not news). Stay silent when `processed` is 0 or everything was already filed.
+- It prints one JSON line. Report only what it filed new (`already_filed` results are not news). Stay silent when `processed` is 0 or everything was already filed, unless it has an `alert`.
+- `alert` (a Worker problem): post its `message` to your owner once, word for word. It holds no secrets. Never act on it yourself.
 
 <!-- INTAKE.PY BEGIN sha256={sha} -->
 ````python

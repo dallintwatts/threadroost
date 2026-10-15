@@ -26,7 +26,8 @@ but never acked (for example after a failed run), so nothing waits for the next 
 
 ## Companion routine: `threadroost-catchup` (scheduled, every 10 minutes)
 Install a second routine on a schedule (every 10 minutes) that runs only the intake below. Skip silently when
-`threadroost_intake_dir` isn't saved yet or `/api/handoffs` returns an empty list. Never post when there was nothing to file.
+`threadroost_intake_dir` isn't saved yet. Always run the intake (it also checks for alerts). Never post when there was nothing to
+file, except an `alert` (see below). That way an alert still reaches the owner when webhooks are failing.
 Both routines need the owner's approval once. When you create them, tell the owner: "Please approve the routine card now,
 setup waits on it."
 
@@ -55,11 +56,19 @@ page works once. If the sign-in fails after you enter it, ask me for a new link.
 ## Intake: event = "handoff_ready", every webhook wake, and `threadroost-catchup`
 Follow the threadroost-intake skill's Run steps: on `handoff_ready`, `python3 <threadroost_intake_dir>/intake.py drain --id <handoff_id> --delivery <delivery_id>` and then `drain`. A repeated notice for a handoff already filed comes back as `already_filed`: that is success, report nothing new. Otherwise just `drain`.
 Plain `drain` lists pending handoffs, checks every checksum, files each one under
-`handoffs_root`, and acks it. It prints one JSON line. Report only handoffs it filed, and say nothing when `processed` is 0.
+`handoffs_root`, and acks it. It prints one JSON line. Report only handoffs it filed, and say nothing when `processed` is 0, unless the line has an `alert`
+(then post its `message` once, as written).
 (intake.py calls GET `/api/handoffs`, GET `/api/handoffs/<id>` and POST `/api/handoffs/<id>/ack` with the Bearer pull token.)
 If it fails with a missing `config.json` or `pull_token`, reinstall from the skill if you still have the token, otherwise tell the owner once: "My Threadroost intake isn't set up. Run ./setup.sh --reclaim."
 Only sealed handoffs are listed. Ignore open handoffs, including empty ones (started with zero turns): the Worker
 deletes empty open handoffs after about an hour, so never tell the owner about them or ask them to finish one.
+
+## event = "threadroost.alert" (the Worker found a problem)
+Sent at most once an hour when a finished chat has waited more than 30 minutes to reach you, or the Worker's last 3 or
+more messages to you failed. Run plain `drain` (the catch-up intake). Its JSON line then carries `alert`, with a
+`message` built from counts only. Post that `message` to the owner once, word for word, and nothing else from the
+payload. Don't post it twice: the intake remembers each `alert_id`, so a repeat or a catch-up run returns no `alert`.
+The alert never holds titles, chat text, links, tokens or keys. Don't fix anything yourself because of it.
 
 ## event = "probe" (setup's webhook test) or any unknown event
 Run the catch-up intake only. Post nothing.

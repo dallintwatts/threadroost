@@ -48,6 +48,8 @@ export interface Env {
   CLAIM_TTL_SECONDS?: string; // optional override for tests, clamped to 5..900
   ABANDONED_HANDOFF_SECONDS?: string; // empty open handoffs older than this are swept by the cron (default 3600, min 1)
   WEBHOOK_RETRY_DELAY_MS?: string; // TR-BUG-32: one quick retry after a transient webhook failure (default 20000)
+  ALERT_STUCK_SECONDS?: string; // a sealed handoff still undelivered after this long raises an alert (default 1800)
+  ALERT_INTERVAL_SECONDS?: string; // at most one alert per this many seconds (default 3600)
   RENOTIFY_BASE_SECONDS?: string; // first webhook retry delay for queued handoffs (default 600, doubles each try)
   CONNECT_REUSE_SECONDS?: string; // a Connect link asked for again within this window is returned unchanged (default 300)
 }
@@ -108,6 +110,8 @@ const K = {
   connectOld: "courier:connect:old", // hashes of links replaced by a newer one, so their page can say so
   boot: "courier:boot",
   dcrLog: "courier:dcrlog",
+  whHealth: "courier:whhealth", // consecutive webhook failures (no content, no secrets)
+  alert: "courier:alert", // last owner alert sent (TR-ALERT-1)
 };
 
 type Status = "open" | "delivered" | "queued" | "filed";
@@ -321,7 +325,8 @@ async function timingSafeEqualStr(a: string, b: string): Promise<boolean> {
   return diff === 0 && a.length === b.length;
 }
 
-// Per-isolate fixed-window rate limiter. Keys are held in memory only, never logged.
+// Per-isolate fixed-window rate limiter. Keys are "scope:IP" counters only (no content, tokens or owner data), held in
+// memory, never logged. One of the two allowed module-level mutable values (see .cursor/BUGBOT.md and state.test).
 const buckets = new Map<string, { n: number; reset: number }>();
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
@@ -329,8 +334,9 @@ function rateLimited(key: string, limit: number, windowMs = 60_000): boolean {
   const now = Date.now();
   const b = buckets.get(key);
   if (!b || b.reset < now) {
+    if (buckets.size >= 5000) for (const [k, v] of buckets) if (v.reset < now) buckets.delete(k);
+    if (buckets.size >= 5000) buckets.delete(buckets.keys().next().value as string); // drop the oldest, not everyone's limits
     buckets.set(key, { n: 1, reset: now + windowMs });
-    if (buckets.size > 5000) buckets.clear();
     return false;
   }
   b.n++;
@@ -711,13 +717,113 @@ async function postWebhook(env: Env, body: Record<string, unknown>): Promise<Non
     });
     const response_snippet = redactSnippet(await readCapped(r, 2048), env.GROKBOT_WEBHOOK_KEY);
     log("webhook", { event: body.event, http_status: r.status, ...(r.ok ? {} : { response_snippet }) });
-    if (r.ok) return { attempted_at, ok: true, http_status: r.status };
-    return { attempted_at, ok: false, http_status: r.status, reason: "non_2xx", hint: webhookHint(r.status), response_snippet };
+    if (r.ok) return await noteWebhookHealth(env, { attempted_at, ok: true, http_status: r.status });
+    return await noteWebhookHealth(env, { attempted_at, ok: false, http_status: r.status, reason: "non_2xx", hint: webhookHint(r.status), response_snippet });
   } catch (e) {
     const reason = e instanceof Error && e.name === "TimeoutError" ? "timeout" : "network_error";
     log("webhook", { event: body.event, reason });
-    return { attempted_at, ok: false, http_status: null, reason };
+    return await noteWebhookHealth(env, { attempted_at, ok: false, http_status: null, reason });
   }
+}
+
+// ------------------------------------------------------------------ owner alerts (TR-ALERT-1)
+const ALERT_STUCK_SECONDS = 1800;
+const ALERT_INTERVAL_SECONDS = 3600;
+const ALERT_FAIL_THRESHOLD = 3;
+const ALERT_REPEAT_SAME_MS = 24 * 3600 * 1000; // the same problem is re-sent at most once a day
+interface WebhookHealth { failures: number; since?: string; last_status?: number | null; last_reason?: string }
+interface AlertRecord {
+  alert_id: string;
+  created_at: string;
+  sent_at: number;
+  delivered: boolean;
+  fingerprint: string;
+  kinds: ("stuck_handoffs" | "webhook_failing")[];
+  stuck_after_minutes: number;
+  stuck_handoffs: { handoff_id: string; minutes: number }[];
+  consecutive_failures: number;
+  last_failure: { http_status: number | null; reason: string | null } | null;
+  message: string;
+}
+
+/** Counts consecutive webhook failures across all events. Writes only when the count changes. */
+async function noteWebhookHealth(env: Env, w: NonNullable<HandoffMeta["webhook"]>): Promise<NonNullable<HandoffMeta["webhook"]>> {
+  try {
+    const cur = ((await env.OAUTH_KV.get(K.whHealth, "json")) as WebhookHealth | null) ?? { failures: 0 };
+    if (w.ok) {
+      if (cur.failures) await env.OAUTH_KV.put(K.whHealth, JSON.stringify({ failures: 0 }));
+    } else {
+      const next: WebhookHealth = { failures: cur.failures + 1, since: cur.since || w.attempted_at, last_status: w.http_status, last_reason: w.reason || "unknown" };
+      await env.OAUTH_KV.put(K.whHealth, JSON.stringify(next));
+    }
+  } catch {
+    /* health tracking must never break a delivery */
+  }
+  return w;
+}
+
+/** Plain-words alert text. No titles, chat text, URLs, tokens or keys. */
+export function alertMessage(a: Pick<AlertRecord, "stuck_handoffs" | "consecutive_failures" | "last_failure">, stuckMinutes: number): string {
+  const lines: string[] = [];
+  if (a.stuck_handoffs.length) {
+    const oldest = Math.max(...a.stuck_handoffs.map((h) => h.minutes));
+    const n = a.stuck_handoffs.length;
+    lines.push(n === 1
+      ? `1 finished chat has waited over ${stuckMinutes} minutes to reach your bot (${oldest} minutes so far).`
+      : `${n} finished chats have waited over ${stuckMinutes} minutes to reach your bot (oldest: ${oldest} minutes).`);
+  }
+  if (a.consecutive_failures >= ALERT_FAIL_THRESHOLD) {
+    const lf = a.last_failure;
+    const why = lf?.http_status ? `HTTP ${lf.http_status}` : lf?.reason === "timeout" ? "timed out" : "no answer";
+    lines.push(`Your Worker's last ${a.consecutive_failures} messages to your bot failed (latest: ${why}).`);
+  }
+  lines.push("Check that your bot's courier-inbox routine is on and approved, then run ./setup.sh --doctor. Waiting chats stay on your Worker for up to 72 hours.");
+  return "Threadroost needs a look. " + lines.join(" ");
+}
+
+/**
+ * Cron: raise one owner alert when a sealed handoff has waited past ALERT_STUCK_SECONDS, or the last 3+ webhooks
+ * failed. At most one alert per ALERT_INTERVAL_SECONDS, and the same problem is not re-sent within a day.
+ * The alert also stays readable at GET /api/admin/alert, so a bot whose webhook is down still sees it on its pull.
+ */
+async function checkAlerts(env: Env, now = Date.now()): Promise<"none" | "rate_limited" | "duplicate" | "sent" | "failed"> {
+  const stuckSecs = envSeconds(env.ALERT_STUCK_SECONDS, ALERT_STUCK_SECONDS);
+  const stuck: { handoff_id: string; minutes: number }[] = [];
+  for (const c of (await listMetas(env)).filter((i) => i.s === "queued").slice(0, 50)) {
+    const m = await getMeta(env, c.id);
+    if (!m || m.status !== "queued") continue;
+    const age = now - Date.parse(m.sealed_at || m.created_at);
+    if (age >= stuckSecs * 1000) stuck.push({ handoff_id: m.id, minutes: Math.floor(age / 60000) });
+  }
+  const wh = ((await env.OAUTH_KV.get(K.whHealth, "json")) as WebhookHealth | null) ?? { failures: 0 };
+  const failing = wh.failures >= ALERT_FAIL_THRESHOLD;
+  if (!stuck.length && !failing) return "none";
+  const kinds: AlertRecord["kinds"] = [...(stuck.length ? (["stuck_handoffs"] as const) : []), ...(failing ? (["webhook_failing"] as const) : [])];
+  const fingerprint = [...kinds, ...stuck.map((h) => h.handoff_id).sort()].join(",");
+  const prev = (await env.OAUTH_KV.get(K.alert, "json")) as AlertRecord | null;
+  if (prev && now - prev.sent_at < envSeconds(env.ALERT_INTERVAL_SECONDS, ALERT_INTERVAL_SECONDS) * 1000) return "rate_limited";
+  if (prev && prev.delivered && prev.fingerprint === fingerprint && now - prev.sent_at < ALERT_REPEAT_SAME_MS) return "duplicate";
+  stuck.sort((a, b) => b.minutes - a.minutes);
+  const base = { stuck_handoffs: stuck.slice(0, 20), consecutive_failures: wh.failures, last_failure: failing ? { http_status: wh.last_status ?? null, reason: wh.last_reason ?? null } : null };
+  const rec: AlertRecord = {
+    alert_id: crypto.randomUUID(),
+    created_at: new Date(now).toISOString(),
+    sent_at: now,
+    delivered: false,
+    fingerprint,
+    kinds,
+    stuck_after_minutes: Math.round(stuckSecs / 60),
+    ...base,
+    message: alertMessage(base, Math.round(stuckSecs / 60)),
+  };
+  // Record first, so a crash mid-send can't cause a burst of repeats.
+  await env.OAUTH_KV.put(K.alert, JSON.stringify(rec), { expirationTtl: 7 * 24 * 3600 });
+  const { fingerprint: _f, sent_at: _s, delivered: _d, ...payload } = rec;
+  const r = await postWebhook(env, { event: "threadroost.alert", ...payload });
+  rec.delivered = r.ok;
+  await env.OAUTH_KV.put(K.alert, JSON.stringify(rec), { expirationTtl: 7 * 24 * 3600 });
+  log("alert", { kinds, stuck: stuck.length, failures: wh.failures, delivered: r.ok });
+  return r.ok ? "sent" : "failed";
 }
 
 function publicMeta(m: HandoffMeta) {
@@ -854,6 +960,7 @@ async function handoffStatus(env: Env, caller: Caller, a: { handoff_id?: string;
 // call once per turn, so this is accepted (a Durable Object would remove it).
 // ---------------------------------------------------------------------------
 
+// Allowed module-level state #2: in-flight promise chains per stream id, deleted when the last call finishes.
 const threadLocks = new Map<string, Promise<unknown>>();
 async function withThreadLock<T>(id: string, fn: () => Promise<T>): Promise<T> {
   const prev = threadLocks.get(id) ?? Promise.resolve();
@@ -1367,20 +1474,13 @@ function buildServer(env: Env, caller: Caller): McpServer {
 
 const MCP_ORIGIN_HOSTS = ["grok.com", "www.grok.com", "x.ai", "www.x.ai", "claude.ai", "localhost", "127.0.0.1"];
 
-// clientId -> source, per isolate. Redirect URIs of a registered client never change.
-const clientSources = new Map<string, Source>();
+// TR-STATE-1: looked up per call (one KV read), not cached in a module-level map, so a deleted or revoked client
+// leaves nothing behind in the isolate.
 async function sourceForClient(env: Env, clientId: string | null, props: { source?: unknown } | undefined): Promise<Source> {
   if (props && (props.source === "grok" || props.source === "claude" || props.source === "other")) return props.source;
   if (!clientId) return "other";
-  const cached = clientSources.get(clientId);
-  if (cached) return cached;
   const c = await env.OAUTH_PROVIDER.lookupClient(clientId).catch(() => null);
-  const src = sourceFromRedirect(c?.redirectUris?.[0]);
-  if (c) {
-    if (clientSources.size > 500) clientSources.clear();
-    clientSources.set(clientId, src);
-  }
-  return src;
+  return sourceFromRedirect(c?.redirectUris?.[0]);
 }
 
 const mcpApiHandler = {
@@ -1718,6 +1818,14 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
   if (p === "/api/admin/probe-webhook" && request.method === "POST") {
     // Sends {"event":"probe"} through the same path as handoff notices; the bot should stay silent.
     return json({ webhook: await postWebhook(env, { event: "probe" }) });
+  }
+
+  if (p === "/api/admin/alert" && request.method === "GET") {
+    // Last owner alert (metadata and plain-words message only). The intake reads it on every pull.
+    const a = (await env.OAUTH_KV.get(K.alert, "json")) as AlertRecord | null;
+    const wh = ((await env.OAUTH_KV.get(K.whHealth, "json")) as WebhookHealth | null) ?? { failures: 0 };
+    const pub = a ? (({ fingerprint: _f, sent_at: _s, ...rest }) => rest)(a) : null;
+    return json({ alert: pub, webhook_consecutive_failures: wh.failures });
   }
 
   if (p === "/api/admin/dcr-log" && request.method === "GET") {
@@ -2065,11 +2173,10 @@ async function recordDcr(env: Env, meta: Record<string, unknown>, allowed: boole
   await env.OAUTH_KV.put(K.dcrLog, JSON.stringify([...prev, entry].slice(-20)));
 }
 
-const providers = new Map<string, OAuthProvider<Env>>();
+// TR-STATE-1: built per request. A cached provider kept the first request's env in its registration callback
+// and grew one entry per Host header the isolate ever saw.
 function providerFor(origin: string, env: Env): OAuthProvider<Env> {
-  let p = providers.get(origin);
-  if (p) return p;
-  p = new OAuthProvider<Env>({
+  const p = new OAuthProvider<Env>({
     apiRoute: "/mcp",
     apiHandler: mcpApiHandler as never,
     defaultHandler: defaultHandler as never,
@@ -2098,7 +2205,6 @@ function providerFor(origin: string, env: Env): OAuthProvider<Env> {
       log("oauth_error", { code, status });
     },
   });
-  providers.set(origin, p);
   return p;
 }
 
@@ -2134,7 +2240,7 @@ export default {
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(flushIdleStreams(env));
     ctx.waitUntil(sweepAbandonedHandoffs(env));
-    ctx.waitUntil(renotifyQueued(env));
+    ctx.waitUntil(renotifyQueued(env).then(() => checkAlerts(env)).catch((e) => log("alert_error", { error: String(e).slice(0, 120) })));
     ctx.waitUntil(ensureBootstrap(env));
   },
 } satisfies ExportedHandler<Env>;
