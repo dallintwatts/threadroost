@@ -8,6 +8,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
+import { spawnSync } from "node:child_process";
 import { startWorker, oauthFlow, mcpClient } from "./helpers.mjs";
 
 const PULL = crypto.randomBytes(32).toString("base64url");
@@ -148,6 +149,18 @@ test("TR-OPS-2: every KV list failing with 429 loses nothing, keeps the ack work
     assert.ok(alert.kinds.includes("storage_list_limited"), JSON.stringify(alert.kinds));
     assert.match(alert.message, /Nothing was deleted/);
     assert.ok(!JSON.stringify(alert).includes("keep me safe"), "no chat text in the alert");
+    // The bot's intake still surfaces the alert when the pending list is unavailable (Bugbot, PR #8).
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "kvlist-intake-"));
+    fs.copyFileSync(path.resolve(import.meta.dirname, "../../bot/intake.py"), path.join(dir, "intake.py"));
+    fs.writeFileSync(path.join(dir, "pull_token"), PULL, { mode: 0o600 });
+    fs.writeFileSync(path.join(dir, "config.json"), JSON.stringify({ worker_url: W.url, timezone: "UTC", handoffs_root: path.join(dir, "h") }));
+    const run = spawnSync("python3", [path.join(dir, "intake.py"), "drain"], { encoding: "utf8" });
+    fs.rmSync(dir, { recursive: true, force: true });
+    const drained = JSON.parse(run.stdout.trim().split("\n").pop());
+    assert.equal(run.status, 1);
+    assert.equal(drained.ok, false);
+    assert.equal(drained.error, "storage_list_limited");
+    assert.match(drained.alert.message, /KV list limit/);
     // The pending list degrades to 503 + retry-after instead of a 500.
     const r = await api(W.url, "/api/handoffs");
     assert.equal(r.status, 503);
