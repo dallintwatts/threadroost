@@ -61,7 +61,7 @@ header nav a{text-decoration:none}header nav a:hover{color:var(--ink)}
 
 /* HERO */
 .hero{display:grid;grid-template-columns:1.05fr 1fr;gap:56px;align-items:center;padding:20px 0 40px}.hero .cap{grid-column:2;margin-top:-44px}
-.nw{white-space:nowrap}h1{font-size:clamp(var(--t4),4.4vw,var(--t6));line-height:1;letter-spacing:-.035em;margin:0 0 var(--s3);font-weight:650;font-stretch:88%}
+.nw{white-space:nowrap}h1{font-size:clamp(var(--t4),4vw,60px);line-height:1;letter-spacing:-.035em;margin:0 0 var(--s3);font-weight:650;font-stretch:88%}
 h1 .k{color:var(--teal)}
 .lede{font-size:var(--t1);line-height:1.45;color:var(--soft);margin:0 0 34px;max-width:27em}
 .cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 26px}
@@ -72,7 +72,7 @@ h1 .k{color:var(--teal)}
 .btn.soon:hover{transform:none;box-shadow:none}
 .quiet{font-size:16px;color:var(--soft)}
 .facts{display:flex;flex-wrap:wrap;gap:8px 22px;margin:22px 0 0;padding:0;list-style:none;font-size:15px;color:var(--soft)}
-.facts li::before{content:"✓";color:var(--teal);font-weight:800;margin-right:7px}
+.facts a{color:inherit}.facts li::before{content:"✓";color:var(--teal);font-weight:800;margin-right:7px}
 
 /* DEMO */
 .demo{display:grid;grid-template-columns:1fr;text-align:left}.demo .win.bot{margin-left:48px}.demo .win:first-child{margin-right:48px}
@@ -198,7 +198,7 @@ footer{padding:0 0 48px;font-size:14px;color:var(--soft);display:flex;flex-wrap:
 
 @media (max-width:900px){
   .wrap{padding:0 20px}
-  h1{font-size:var(--t4)}.big h2,.end h2,.split h2{font-size:var(--t3)}
+  h1{font-size:clamp(36px,10.4vw,var(--t4))}.big h2,.end h2,.split h2{font-size:var(--t3)}
   header nav{display:none}
   .hero{padding:28px 0 24px}
   .hero{grid-template-columns:1fr;gap:36px}.hero .cap{grid-column:1;margin-top:-20px}
@@ -234,7 +234,7 @@ footer{padding:0 0 48px;font-size:14px;color:var(--soft);display:flex;flex-wrap:
 .vrow{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 26px;border-radius:18px;background:var(--surface);border:1px solid var(--line);font-size:16px}
 .vrow b{font-size:18px}.vrow span{color:var(--soft);text-align:right}
 .vrow:first-child{background:var(--wash);border-color:transparent}
-.vrow.no b{text-decoration:line-through;text-decoration-thickness:2px;color:var(--soft)}
+.vrow.no b{color:var(--soft)}.vrow.no b::before{content:"✕";margin-right:10px;color:var(--soft);font-weight:800}
 #start .steps{margin-bottom:48px}
 .steps .n{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--teal);color:var(--teal-ink);font-size:16px}
 .narrow{max-width:760px;margin:0 auto}
@@ -251,6 +251,8 @@ header .navcta{color:var(--teal);font-weight:650}
 @media (max-width:900px){
  .big{padding:96px 0 0}.split{grid-template-columns:1fr;gap:36px}.rev>div:first-child{order:0}
  .qs{grid-template-columns:1fr}.qs blockquote{font-size:19px}
+ .demo .s1,.demo .s2,.demo .composer{display:none}.demo .win:first-child .msgs{min-height:0}.hero{gap:0}.hero .copy{display:contents}.hero .demo{order:1;margin-top:22px}.hero .pipe{height:18px}.hero .bot .msgs{padding-top:12px}.hero .cap{order:2;margin-top:14px}.hero .facts{order:3}.hero .cta .quiet{display:none}.hero .lede{font-size:19px}.hero .eyebrow{margin-bottom:12px}.hero{padding-top:16px}.lede{margin-bottom:26px}.facts{margin-top:18px}
+ .demo .file.prior,.demo .bot .bar .av,.demo .bot .status{display:none}
  .vrow{flex-direction:column;align-items:flex-start;gap:4px}.vrow span{text-align:left}
  #answers{padding:96px 0 40px}.flow{padding:28px 20px}
 }
@@ -266,18 +268,18 @@ header .navcta{color:var(--teal);font-weight:650}
 <div class="hero">
 <div class="copy">
 <p class="eyebrow">For Grok Bot users</p>
-<h1>Your SuperGrok and Claude chats, <span class="k">filed in your Grok&nbsp;Bot.</span></h1>
-<p class="lede">Word for word, every turn. Your bots pick up where you left off.</p>
+<h1>Your SuperGrok and Claude chats, <span class="k">filed in your Grok&nbsp;Bot,</span> word for&nbsp;word.</h1>
+<p class="lede">Every turn becomes a transcript your bots can read. They pick up where you left off.</p>
 <div class="cta">
 <a class="btn" href="<REPO_URL>/blob/main/INSTALL.md" data-soon="Add to Grok Bot · launching soon">Add Threadroost to Grok Bot</a>
 <a class="quiet" href="#how">See how it feels</a>
 </div>
-<ul class="facts"><li>Free and open source</li><li>Runs in your own Cloudflare</li><li>About 5 minutes to set up</li></ul>
+<ul class="facts"><li>Free and <a href="<REPO_URL>" data-soon="open source">open source</a></li><li>Runs in your own Cloudflare</li><li>About five minutes to set up</li></ul>
 </div>
 
 <div class="demo" role="img" aria-label="Example: a SuperGrok chat settles launch pricing at $49. The chat is filed in Grok Bot as Launch project, 3 turns. The Chief of Staff bot then continues: it drafted the announcement and queued it for review, and the user asks for it tonight.">
   <div class="win" aria-hidden="true">
-    <div class="bar"><i></i><i></i><i></i><span>SuperGrok · Launch project</span><span class="tag">Example</span></div>
+    <div class="bar"><i></i><i></i><i></i><span>SuperGrok · Launch</span><span class="tag">Example</span></div>
     <div class="msgs">
       <div class="m u s1">Should the launch tier be $29 or $49?</div>
       <div class="m a s2">Start at $49 with a founding discount. It anchors value and gives you room to move.</div>
@@ -334,7 +336,7 @@ header .navcta{color:var(--teal);font-weight:650}
 <div class="vault" role="img" aria-label="Your Cloudflare account holds Threadroost. Nobody else has a copy.">
 <div class="vrow"><b>Your Cloudflare account</b><span>Threadroost lives here</span></div>
 <div class="vrow"><b>Your Grok Bot</b><span>Reads it with your private key</span></div>
-<div class="vrow no"><b>Us</b><span>No server, no copy, no trackers</span></div>
+<div class="vrow no"><b>Threadroost’s makers</b><span>No server, no copy, no trackers</span></div>
 </div>
 </section>
 
