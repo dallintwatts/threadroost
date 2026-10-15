@@ -33,6 +33,13 @@ export function startFakeCourier(dir, port) {
       if (url.pathname === "/api/pair") return send(200, { code: "12345678", expires_at: new Date(Date.now() + 600000).toISOString() });
       if (url.pathname === "/api/admin/probe-webhook") {
         const ok = !!(s.GROKBOT_WEBHOOK_URL && s.GROKBOT_WEBHOOK_KEY);
+        // TR-CI-1: $dir/probe-busy holds how many probes should get a busy bot's HTTP 400 first.
+        const busyFile = path.join(dir, "probe-busy");
+        const busy = fs.existsSync(busyFile) ? Number(fs.readFileSync(busyFile, "utf8")) : 0;
+        if (ok && busy > 0) {
+          fs.writeFileSync(busyFile, String(busy - 1));
+          return send(200, { webhook: { ok: false, http_status: 400, reason: "non_2xx", response_snippet: "Automation run rate limit reached. Try again later." } });
+        }
         return send(200, { webhook: { ok, http_status: ok ? 200 : null, reason: ok ? undefined : "webhook_not_configured" } });
       }
     }

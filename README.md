@@ -30,16 +30,17 @@ copy in Cloudflare is deleted. Nobody else holds your keys or your chats.
 1. **Add the Threadroost bot template** to Grok Bot and say "Show my Threadroost webhook" in its chat.
    The bot sends private links to its **Webhook URL** and **webhook key**. Setup asks for both. Never paste the key into a chat.
 2. **Deploy your Worker** with one of these:
-   - **One command** (macOS, Linux or WSL with Node 22+): clone this repo, then run
+   - **One command** (macOS, Linux or WSL with Node 22+):
      ```bash
-     cd worker && ./setup.sh
+     git clone https://github.com/dallintwatts/threadroost threadroost
+     cd threadroost/worker && ./setup.sh
      ```
      It signs you in to Cloudflare, deploys, asks for the two webhook values, tests everything and prints your
      connector URL. Run it again any time. It only fixes what is missing.
    - **No terminal:** click **Deploy to Cloudflare** above and fill in the form.
      [Form walkthrough](INSTALL.md#option-b-deploy-to-cloudflare-button).
 3. **Connect SuperGrok or Claude** with your connector URL and a one-time pairing code, then paste the standing
-   instruction into a SuperGrok Project. [Steps 3 to 6 in INSTALL.md](INSTALL.md#3-give-your-bot-the-pull-token-and-worker-url).
+   instruction into a SuperGrok Project. [Steps 3 to 5 in INSTALL.md](INSTALL.md#3-open-the-connect-link-your-bot-sends-you).
 
 ## Copy-paste blocks
 
@@ -175,10 +176,10 @@ npm run preflight -- https://<your-worker>   # read-only checks against a deploy
 ## Update, rotate, remove
 
 - **Update:** pull the new version, then `./setup.sh` (it redeploys and keeps your KV, secrets and connections).
-- **Rotate the pull token:** `./setup.sh --rotate-token`, then give your bot the new token.
+- **Rotate the pull token:** `./setup.sh --rotate-token`, then `./setup.sh --reclaim` so your bot collects the new one.
 - **Change the webhook:** `./setup.sh --reset-webhook`.
 - **Unpair everything:** `POST /api/admin/revoke-all` (or ask your bot), then remove the connector in grok.com / claude.ai.
-- **Remove:** `npx wrangler delete` (Worker + secrets) and `npx wrangler kv namespace delete --namespace-id <id>`.
+- **Remove:** `./setup.sh --remove` (deletes the Worker, its secrets and its storage after you type the name).
 
 ## License
 

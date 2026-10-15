@@ -3,6 +3,7 @@
 ## Unreleased (2026-10-15)
 - Fix (TR-BUG-33): handoff_ready webhooks now carry `delivery_id` and `attempt`. The bot intake keeps a ledger keyed on handoff id plus delivery id, under a file lock. A repeat or re-claim of a handoff already filed returns `already_filed` with its path instead of logging a false duplicate, and re-acks with the original verdict when the first ack was lost.
 - Security (TR-SEC-1): handoff text is treated as untrusted data in the inbox routine and the skill. Each turn is fenced in transcript.md so it cannot forge headings, and the intake refuses malformed handoff and delivery ids.
+- Setup (TR-CI-1..4, clean-install test): a busy bot's HTTP 400 on the webhook test is retried once after 20 seconds, and a lasting failure shows the bot's reply and what to do next. README quick start shows the clone command, its INSTALL link points at step 3 again, and the rotate and remove lines match setup.sh.
 - Landing: removed `Cache-Control: no-transform` so compression works again.
 
 ## 1.2.2 (2026-10-15)

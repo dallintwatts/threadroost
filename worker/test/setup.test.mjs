@@ -129,7 +129,7 @@ test("first run: login, name, KV, deploy, secrets, checks, pairing; nothing secr
   assert.equal(fs.statSync(path.join(sb.w, ".courier")).mode & 0o777, 0o700);
   assert.ok(r.out.includes(`https://${cfg.name}.example-sub.workers.dev/mcp`), "prints the /mcp URL");
   assert.ok(r.out.includes("Connect link") && !r.out.includes("Pairing code"), r.out); // v1.2: pairing moved to the Connect page
-  assert.ok(r.out.includes("Webhook probe delivered"), r.out);
+  assert.ok(r.out.includes("Webhook test passed"), r.out);
   assert.ok(!r.out.includes(KEY) && !r.out.includes(token), "no secret in output");
   const log = fs.readFileSync(path.join(sb.cf, "calls.log"), "utf8");
   assert.ok(!log.includes(KEY) && !log.includes(token), "no secret in any wrangler argv");
@@ -270,4 +270,24 @@ test("TR-BUG-17: a fresh install marks courier:boot before storing its token, so
   assert.equal(r2.code, 0, r2.out);
   const after = calls(sb).slice(n).map((c) => (Array.isArray(c) ? c : c.argv || []).join(" "));
   assert.ok(!after.some((c) => c.includes("courier:boot")), "re-run leaves courier:boot alone");
+});
+
+// TR-CI-1: in the clean-install test the first probe hit a busy bot (HTTP 400, rate limit) and setup told the
+// user to re-check the URL and key. A busy reply is retried once, and a lasting failure shows the bot's reply.
+test("webhook probe: a busy bot is retried once, and a lasting failure shows the bot's reply", async () => {
+  const env = { SETUP_PROBE_RETRY_SECONDS: "0" };
+  const sb = sandbox();
+  await bind(sb);
+  fs.writeFileSync(path.join(sb.cf, "probe-busy"), "1");
+  const r = await run(sb, [], `\n${HOOK}\n${KEY}\n`, env);
+  assert.equal(r.code, 0, r.out);
+  assert.ok(r.out.includes("it may be busy") && r.out.includes("Webhook test passed"), r.out);
+  assert.ok(!r.out.includes("Webhook test failed"), r.out);
+  const sb2 = sandbox();
+  await bind(sb2);
+  fs.writeFileSync(path.join(sb2.cf, "probe-busy"), "5");
+  const r2 = await run(sb2, [], `\n${HOOK}\n${KEY}\n`, env);
+  assert.equal(r2.code, 0, r2.out);
+  assert.ok(r2.out.includes("Webhook test failed: your bot answered HTTP 400") && r2.out.includes("Your bot replied: Automation run rate limit reached"), r2.out);
+  assert.ok(r2.out.includes("./setup.sh --no-deploy to test again") && !r2.out.includes(KEY), r2.out);
 });

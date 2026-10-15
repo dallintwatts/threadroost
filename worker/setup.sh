@@ -455,10 +455,27 @@ if [ "$webhook_set" = 1 ] && [ "$token_ready" = 1 ]; then
     [ "$reason" = "webhook_not_configured" ] || break
     sleep 5
   done
+  # TR-CI-1: a bot that is busy (for example right after the first claim link) can answer 400 for a moment.
+  # Try once more after 20 s (SETUP_PROBE_RETRY_SECONDS in tests) unless the reply clearly says the key or routine is wrong.
+  if [ "$(printf '%s' "$probe" | LIB json-field body.webhook.ok)" != "true" ] && [ "$reason" = "non_2xx" ] \
+     && ! printf '%s' "$probe" | LIB json-field body.webhook.response_snippet | grep -qiE 'paused|disabled|not found|deleted|unauthori[sz]ed|forbidden|invalid (api )?key'; then
+    info "Your bot didn't accept the test message yet (it may be busy). Trying again in ${SETUP_PROBE_RETRY_SECONDS:-20} seconds..."
+    sleep "${SETUP_PROBE_RETRY_SECONDS:-20}"
+    probe="$(LIB api "$BASE" "$TOKEN_FILE" POST /api/admin/probe-webhook)"
+    reason="$(printf '%s' "$probe" | LIB json-field body.webhook.reason)"
+  fi
   if [ "$(printf '%s' "$probe" | LIB json-field body.webhook.ok)" = "true" ]; then
-    ok "Webhook probe delivered: a test message reached your bot (HTTP $(printf '%s' "$probe" | LIB json-field body.webhook.http_status)). Bots ignore test messages."
+    ok "Webhook test passed: a test message reached your bot (HTTP $(printf '%s' "$probe" | LIB json-field body.webhook.http_status)). Bots ignore test messages."
   else
-    warn "Webhook probe failed (${reason:-unknown}, HTTP $(printf '%s' "$probe" | LIB json-field body.webhook.http_status)). Check the URL/key and re-run with --reset-webhook. Handoffs still queue safely."
+    hs="$(printf '%s' "$probe" | LIB json-field body.webhook.http_status)"
+    if [ -n "$hs" ]; then warn "Webhook test failed: your bot answered HTTP $hs. Handoffs still queue safely."
+    else warn "Webhook test failed: no answer from your bot (${reason:-unknown}). Handoffs still queue safely."; fi
+    snip="$(printf '%s' "$probe" | LIB json-field body.webhook.response_snippet)"
+    if [ -n "$snip" ]; then info "Your bot replied: $snip"; fi
+    info "What to do:"
+    info "  - Busy or rate limited: wait a few minutes, then run ./setup.sh --no-deploy to test again."
+    info "  - Paused: approve the courier-inbox routine card in your bot's chat, then run ./setup.sh --no-deploy."
+    info "  - Anything else: re-copy both values from your bot's links, then run ./setup.sh --reset-webhook."
   fi
 fi
 

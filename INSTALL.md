@@ -143,7 +143,7 @@ Say **"sync now"** before you walk away to push the last reply immediately. Othe
 | `error code: 1042` or 404 right after the first deploy | New workers.dev names take a minute or two. Run `./setup.sh --no-deploy` to re-check |
 | Sign-in page says the code is invalid or expired | Codes last 10 minutes and work once, even if the sign-in failed afterwards. 5 wrong tries cancel them. Ask your bot for a new Connect link (or run `./setup.sh --pair`), then add the connector again |
 | Claude or grok.com says the redirect isn't allowed | Ask your bot to show the connector's registration log (`GET /api/admin/dcr-log`). It shows which address the app tried. Include that line when you ask for help (see Support below) |
-| Webhook probe failed | Ask your bot "Show my Threadroost webhook", re-copy both values from its links, then run `./setup.sh --reset-webhook`. Handoffs queue safely meanwhile |
+| Webhook test failed | Read the line under it, "Your bot replied: ...". Busy or rate limited: wait a few minutes, then run `./setup.sh --no-deploy`. Paused: approve the `courier-inbox` routine card in the bot's chat. Anything else: ask your bot "Show my Threadroost webhook", re-copy both values, then run `./setup.sh --reset-webhook`. Handoffs queue safely meanwhile |
 | "More than one account" | Choose when asked, or export `CLOUDFLARE_ACCOUNT_ID` |
 | Free plan cron limit reached | Each account has a few scheduled-job slots. Free one up, or remove `triggers` from `wrangler.jsonc` (quiet threads then send on the next turn or "sync now") |
 | grok.com doesn't see `sync_turns` after an update | Refresh the connector, or remove and re-add it |
