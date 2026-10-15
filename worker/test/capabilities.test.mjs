@@ -19,6 +19,8 @@ export function fingerprint(ts, py, wrangler) {
     worker_routes: uniq([
       ...all(/url\.pathname(?: === |\.startsWith\()"([^"]+)"/g, ts),
       ...all(/\bp === "([^"]+)"/g, ts),
+      ...all(/\b(?:apiRoute|[a-zA-Z]+Endpoint): "(\/[^"]*)"/g, ts), // OAuthProvider routes (TR-CAP-1, Bugbot PR #6)
+      ...all(/"(\/\.well-known\/[^"]+)"/g, ts), // discovery URLs and their aliases
       ...all(/\bp\.match\(\/\^(.+?)\$\/\)/g, ts).map((r) => r.replace(/\\\//g, "/")),
     ]),
     worker_mcp_tools: uniq(all(/registerTool\(\s*"([a-z_]+)"/g, ts)),
@@ -58,4 +60,6 @@ test("fingerprint catches a new capability (regression for TR-CAP-1)", () => {
   assert.notDeepEqual(more.worker_routes, base.worker_routes);
   assert.equal(more.worker_outbound_fetch, 2);
   assert.ok(more.intake_imports.includes("socket"));
+  const oauth = fingerprint(ts + '\n tokenEndpoint: "/oauth/token",\n "/.well-known/x": "/.well-known/y",', "import os", "");
+  for (const r of ["/oauth/token", "/.well-known/x", "/.well-known/y"]) assert.ok(oauth.worker_routes.includes(r), r);
 });

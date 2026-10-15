@@ -16,7 +16,7 @@ the `test` check fails.
 
 Who can reach what:
 
-* **Anyone:** `/`, `/health`, `/assets/*`, OAuth discovery and its two aliases, `/oauth/register` (rate-limited), `/authorize` and `/connect` (owner approval page).
+* **Anyone:** `/`, `/health`, `/assets/*`, OAuth discovery and its two aliases, `/oauth/register` (rate-limited), `/oauth/token`, `/authorize` and `/connect` (owner approval page).
 * **An approved AI app (OAuth token):** `/mcp` and its five tools (`start_handoff`, `append_turns`, `finish_handoff`, `sync_turns`, `handoff_status`). These can add turns and check status. They can't list, read or delete handoffs.
 * **The bot, once:** `/claim` swaps a single-use 15-minute claim code for the pull token.
 * **Holder of the pull token:** every `/api/*` route. That means listing, reading and acking (deleting) handoffs, and minting pair codes and connect links. It also covers the `/api/admin/*` routes: listing, adding and removing OAuth clients, revoking all grants, probing the webhook, and reading the alert and registration logs. Today one token covers both pulling and admin (see the open item below).
@@ -67,10 +67,11 @@ rotation, so it is tracked as a proposal and is not in this version.
 ```json capabilities
 {
   "worker_routes": [
-    "/", "/api/", "/api/admin/alert", "/api/admin/clients", "/api/admin/clients/([^/]+)", "/api/admin/dcr-log",
+    "/", "/.well-known/oauth-authorization-server", "/.well-known/oauth-authorization-server/mcp",
+    "/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/mcp", "/api/", "/api/admin/alert", "/api/admin/clients", "/api/admin/clients/([^/]+)", "/api/admin/dcr-log",
     "/api/admin/probe-webhook", "/api/admin/revoke-all", "/api/connect-link", "/api/handoffs",
     "/api/handoffs/([a-z0-9]+)", "/api/handoffs/([a-z0-9]+)/ack", "/api/pair", "/assets/mono.woff2",
-    "/assets/sans.woff2", "/authorize", "/claim", "/connect", "/health", "/mcp", "/oauth/register"
+    "/assets/sans.woff2", "/authorize", "/claim", "/connect", "/health", "/mcp", "/oauth/register", "/oauth/token"
   ],
   "worker_mcp_tools": ["append_turns", "finish_handoff", "handoff_status", "start_handoff", "sync_turns"],
   "worker_outbound_fetch": 1,
