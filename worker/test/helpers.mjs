@@ -49,6 +49,7 @@ export async function startWorker({ port, vars = {}, extraArgs = [], cwd = path.
   child.removeAllListeners("exit");
   return {
     url: `http://localhost:${port}`,
+    persist,
     logs,
     output: () => out,
     stop: () =>

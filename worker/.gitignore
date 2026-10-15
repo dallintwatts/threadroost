@@ -4,3 +4,4 @@ node_modules
 .env
 # setup.sh state: pull token (0600), deploy output, chosen account/name. Never commit.
 .courier/
+eval/results/
