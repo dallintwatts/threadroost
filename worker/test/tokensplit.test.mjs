@@ -82,6 +82,10 @@ test("TR-SEC-3: pull token refused on admin routes and pair codes, admin token a
     assert.notEqual(pr.status, 0);
     assert.equal(JSON.parse(pr.stdout.trim()).error, "admin_token_required");
     fs.rmSync(dir, { recursive: true, force: true });
+    // Bugbot PR #7: pages no longer send the owner to the bot for a link it can't mint.
+    const page = await (await fetch(`${W.url}/connect?t=${"x".repeat(43)}`)).text();
+    assert.match(page, /setup\.sh --pair/);
+    assert.doesNotMatch(page, /Ask your bot for a new Connect link/);
   } finally {
     await W.stop();
   }
@@ -93,6 +97,8 @@ test("TR-SEC-3: without an admin token (older installs) the pull token keeps ful
     assert.equal((await (await fetch(`${W.url}/health`)).json()).admin_token_split, false);
     assert.equal((await call(W.url, PULL, "/api/admin/clients")).status, 200);
     assert.equal((await call(W.url, ADMIN, "/api/admin/clients")).status, 401);
+    const page = await (await fetch(`${W.url}/connect?t=${"x".repeat(43)}`)).text();
+    assert.match(page, /Ask your bot for a new Connect link/);
   } finally {
     await W.stop();
   }

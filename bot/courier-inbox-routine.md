@@ -50,6 +50,8 @@ On each webhook payload, read `event`:
 Only when the owner asks (for example the link expired, or a sign-in failed and used up the code):
 POST `<worker_url>/api/connect-link` with header `Authorization: Bearer <pull_token>` (both from `<threadroost_intake_dir>`). Post the returned `connect_url` once.
 If the owner asks again within 5 minutes the Worker returns the same unused link (`reused: true`), which is expected.
+403 `admin_token_required` → the owner has split the tokens (TR-SEC-3), so the pull token can't mint links. Tell the owner:
+"For a new pairing code, run ./setup.sh --pair on your computer with --token-file pointing at your admin token." Stop.
 Add `?fresh=1` only when the owner says the current link already failed. Tell the owner: "The pairing code on that
 page works once. If the sign-in fails after you enter it, ask me for a new link."
 

@@ -1610,7 +1610,7 @@ async function handleAuthorize(request: Request, env: Env): Promise<Response> {
         log("authorize", { outcome: result === "none" ? "no_active_code" : "bad_code" });
         const msg =
           result === "none"
-            ? "This code is used up or has expired. Each code works once, even if the sign-in failed afterwards, and lasts 10 minutes. Ask your bot for a new Connect link, open it, then start the connection again in your app and enter the new code."
+            ? `This code is used up or has expired. Each code works once, even if the sign-in failed afterwards, and lasts 10 minutes. ${newLinkHint(env)}, then start the connection again in your app and enter the new code.`
             : "That code is not right. Check it and try again. After 5 wrong tries the code is cancelled.";
         // The consent handle is not consumed, so the user can retry on the same page.
         return page(
@@ -1663,6 +1663,13 @@ const PULL_ROUTES: readonly { method: string; re: RegExp }[] = Object.freeze([
 
 function adminToken(env: Env): string | null {
   return env.COURIER_ADMIN_TOKEN && env.COURIER_ADMIN_TOKEN.length >= 32 ? env.COURIER_ADMIN_TOKEN : null;
+}
+
+/** TR-SEC-3 (Bugbot PR #7): after the split the bot can't mint links, so pages point the owner at setup.sh instead. */
+function newLinkHint(env: Env): string {
+  return adminToken(env)
+    ? "Run ./setup.sh --pair on your computer, with --token-file pointing at your admin token, for a new pairing code"
+    : "Ask your bot for a new Connect link";
 }
 
 /** null = allowed. With no admin token set (older installs), the pull token keeps full access as before. */
@@ -2080,17 +2087,17 @@ function fontResponse(b64: string): Response {
   return new Response(bin, { headers: { "content-type": "font/woff2", "cache-control": "public, max-age=31536000, immutable" } });
 }
 
-function copyScript(nonce: string, expiresAt?: number): string {
+function copyScript(nonce: string, expiresAt?: number, hint = "Ask your bot for a new Connect link"): string {
   return `<script nonce="${nonce}">
 document.querySelectorAll("[data-copy]").forEach(function(b){b.addEventListener("click",function(){var t=document.getElementById(b.getAttribute("data-copy")).textContent;navigator.clipboard.writeText(t).then(function(){var o=b.textContent;b.textContent="Copied";document.getElementById("live").textContent="Copied to clipboard";setTimeout(function(){b.textContent=o},1600)})})});
-${expiresAt ? `(function(){var end=${expiresAt},el=document.getElementById("timer"),live=document.getElementById("live"),warned=false;function tick(){var s=Math.max(0,Math.round((end-Date.now())/1000));if(s===0){el.textContent="This code has expired. Ask your bot for a new Connect link.";el.className="timer low";live.textContent=el.textContent;document.getElementById("code").style.opacity=".35";return}var m=Math.floor(s/60),r=("0"+s%60).slice(-2);el.textContent="Expires in "+m+":"+r;if(s<=60){el.className="timer low";if(!warned){warned=true;live.textContent="One minute left on your pairing code"}}setTimeout(tick,1000)}tick()})();` : ""}
+${expiresAt ? `(function(){var end=${expiresAt},el=document.getElementById("timer"),live=document.getElementById("live"),warned=false;function tick(){var s=Math.max(0,Math.round((end-Date.now())/1000));if(s===0){el.textContent=${JSON.stringify(`This code has expired. ${hint}.`)};el.className="timer low";live.textContent=el.textContent;document.getElementById("code").style.opacity=".35";return}var m=Math.floor(s/60),r=("0"+s%60).slice(-2);el.textContent="Expires in "+m+":"+r;if(s<=60){el.className="timer low";if(!warned){warned=true;live.textContent="One minute left on your pairing code"}}setTimeout(tick,1000)}tick()})();` : ""}
 </script>`;
 }
 
 async function handleConnect(request: Request, env: Env, url: URL): Promise<Response> {
   const nonce = randomSecret(16);
   if (rateLimited(clientKey(request, "connect"), 20)) return brandPage("Slow down", `<h1>Too many tries.</h1><p class="lede">Wait a minute, then open your Connect link again.</p>`, nonce, 429);
-  const expired = brandPage("Link expired", `<h1>This link has expired.</h1><p class="lede">Connect links work once and last 15 minutes. Ask your bot for a new Connect link.</p>`, nonce, 410);
+  const expired = brandPage("Link expired", `<h1>This link has expired.</h1><p class="lede">Connect links work once and last 15 minutes. ${newLinkHint(env)}.</p>`, nonce, 410);
   const superseded = brandPage("Newer link issued", `<h1>A newer link was issued.</h1><p class="lede">Your bot sent a newer Connect link, which replaced this one. Use the latest link in your bot's chat.</p>`, nonce, 410);
   const isSuperseded = async (t: string) => {
     if (!t) return false;
@@ -2136,8 +2143,8 @@ async function handleConnect(request: Request, env: Env, url: URL): Promise<Resp
 <section class="step"><h2><span class="n">3</span>Turn on live sync</h2><p>Make a SuperGrok Project, open its Instructions and paste this. Chats in that Project now reach your bot.</p>
 <div class="field"><pre id="ins">${escapeHtml(SYNC_INSTRUCTION)}</pre><button data-copy="ins">Copy</button></div></section>
 <p class="note">Using Claude too? Add the same link in Claude under Connectors, then say “log this” in any chat you want kept. </p>
-<p class="note"><b>The code works once.</b> If the sign-in fails or you close the window after entering it, the code is used up. Ask your bot for a new Connect link (for example: “send me a new Threadroost link”), then add the connector again.</p>
-${copyScript(nonce, exp)}`, nonce);
+<p class="note"><b>The code works once.</b> If the sign-in fails or you close the window after entering it, the code is used up. ${adminToken(env) ? newLinkHint(env) : "Ask your bot for a new Connect link (for example: “send me a new Threadroost link”)"}, then add the connector again.</p>
+${copyScript(nonce, exp, newLinkHint(env))}`, nonce);
 }
 
 function runningPage(): Response {
