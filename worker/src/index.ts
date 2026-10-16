@@ -1634,8 +1634,8 @@ function page(title: string, body: string, status = 200, headers?: Headers): Res
   h.set("x-frame-options", "DENY");
   h.set("content-security-policy", "default-src 'none'; style-src 'unsafe-inline'; font-src 'self'; form-action 'self' https:; frame-ancestors 'none'");
   h.set("referrer-policy", "no-referrer");
-  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escapeHtml(title)}</title>
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>${escapeHtml(title)} · Threadroost</title>
 <style>@font-face{font-family:"Instrument Sans";src:url(/assets/sans.woff2) format("woff2");font-weight:400 700;font-stretch:75% 100%;font-display:swap}
 :root{--bg:#FBF8F3;--surface:#fff;--ink:#14201F;--soft:#4A5754;--line:#E3DDD2;--teal:#0F6E66;--teal-ink:#fff;--err:#A3261B}
 @media (prefers-color-scheme:dark){:root{--bg:#0C1211;--surface:#141C1B;--ink:#EEF3F2;--soft:#A9B6B3;--line:#24302E;--teal:#5FE0CF;--teal-ink:#0C1211;--err:#FF8A80}}
@@ -1648,17 +1648,20 @@ button.secondary{background:transparent;color:var(--ink);border:1px solid var(--
   return new Response(html, { status, headers: h });
 }
 
+// Shown when an app tries to sign in from an address this connector does not allow. Says what to do next.
+const NOT_ALLOWED = `<h1>This app can't connect here</h1><p>Its sign-in address is not on this connector's allowed list, so nothing was shared.</p><p class="muted">If you added this connector yourself in grok.com or claude.ai, ask your bot to show the connector's registration log and include that line when you ask for help. Otherwise you can close this page.</p>`;
+
 function consentForm(handle: string, clientName: string, redirectHost: string, error?: string): string {
   return `<h1>Connect to Threadroost</h1>
 <p><strong>${escapeHtml(clientName)}</strong> wants to send conversations to this connector. Access will be sent to <strong>${escapeHtml(redirectHost)}</strong>.</p>
 <p class="muted">The client registered itself, so its name is not verified. Only continue if you started this connection yourself.</p>
-${error ? `<p class="err">${escapeHtml(error)}</p>` : ""}
+${error ? `<p id="code-err" class="err" role="alert">${escapeHtml(error)}</p>` : ""}
 <form method="post" action="/authorize" autocomplete="off">
 <input type="hidden" name="handle" value="${escapeHtml(handle)}">
 <input type="hidden" name="client_name" value="${escapeHtml(clientName)}">
 <input type="hidden" name="redirect_host" value="${escapeHtml(redirectHost)}">
 <label for="code">Pairing code from your bot (8 digits)</label>
-<input id="code" type="text" name="code" inputmode="numeric" pattern="[0-9 ]{8,9}" maxlength="9" required autofocus>
+<input id="code" type="text" name="code" inputmode="numeric" pattern="[0-9 ]{8,9}" maxlength="9" required autofocus${error ? ' aria-invalid="true" aria-describedby="code-err"' : ""}>
 <button name="decision" value="approve">Approve</button> <button class="secondary" name="decision" value="deny" formnovalidate>Deny</button>
 </form>`;
 }
@@ -1670,7 +1673,7 @@ async function handleAuthorize(request: Request, env: Env): Promise<Response> {
       const authReq: AuthRequest = await oauth.parseAuthRequest(request);
       if (!redirectAllowed(authReq.redirectUri, env)) {
         log("authorize", { outcome: "redirect_host_blocked" });
-        return page("Not allowed", "<h1>Not allowed</h1><p>This client's redirect address is not on the allowed list.</p>", 400);
+        return page("Not allowed", NOT_ALLOWED, 400);
       }
       const details = await oauth.describeConsent(authReq);
       const consent = await oauth.beginConsent(authReq);
@@ -1678,7 +1681,7 @@ async function handleAuthorize(request: Request, env: Env): Promise<Response> {
       return page("Connect to Threadroost", consentForm(consent.handle, details.clientName, details.redirectHost), 200, consent.headers);
     }
     if (request.method === "POST") {
-      if (rateLimited(clientKey(request, "authorize"), 20)) return page("Slow down", "<h1>Too many attempts</h1><p>Wait a minute.</p>", 429);
+      if (rateLimited(clientKey(request, "authorize"), 20)) return page("Slow down", "<h1>Too many attempts</h1><p>Wait a minute, then enter your pairing code again on this page.</p>", 429);
       const form = await request.formData();
       const handle = String(form.get("handle") || "");
       const decision = String(form.get("decision") || "");
@@ -1703,7 +1706,7 @@ async function handleAuthorize(request: Request, env: Env): Promise<Response> {
       }
       const approved = await oauth.approveConsent(request, handle);
       if (!redirectAllowed(approved.request.redirectUri, env)) {
-        return page("Not allowed", "<h1>Not allowed</h1><p>Redirect address not allowed.</p>", 400);
+        return page("Not allowed", NOT_ALLOWED, 400);
       }
       const client = await oauth.lookupClient(approved.request.clientId);
       const scope = approved.request.scope.length ? approved.request.scope : ["courier"];
@@ -2242,7 +2245,7 @@ async function handleConnect(request: Request, env: Env, url: URL): Promise<Resp
 <div class="field"><output id="code" class="code">${code}</output><button data-copy="code">Copy</button></div><p id="timer" class="timer">Expires in 10:00</p></section>
 <section class="step"><h2><span class="n">3</span>Turn on live sync</h2><p>Make a SuperGrok Project, open its Instructions and paste this. Chats in that Project now reach your bot.</p>
 <div class="field"><pre id="ins">${escapeHtml(SYNC_INSTRUCTION)}</pre><button data-copy="ins">Copy</button></div></section>
-<p class="note">Using Claude too? Add the same link in Claude under Connectors, then say “log this” in any chat you want kept. </p>
+<p class="note">Using Claude too? Add the same link in Claude under Connectors, then say “log this” in any chat you want kept.</p>
 <p class="note"><b>The code works once.</b> If the sign-in fails or you close the window after entering it, the code is used up. ${adminToken(env) ? newLinkHint(env) : "Ask your bot for a new Connect link (for example: “send me a new Threadroost link”)"}, then add the connector again.</p>
 ${copyScript(nonce, exp, newLinkHint(env))}`, nonce);
 }
