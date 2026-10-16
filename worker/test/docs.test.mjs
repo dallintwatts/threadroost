@@ -106,7 +106,7 @@ test("TR-TPL-6/8: the template bootstrap's pinned SKILL.md sizes and hashes matc
   assert.match(mems[2], /name=threadroost-getting-started .* Then run it\.$/, "bootstrap still hands off to getting-started");
   assert.match(mems[3], /Want me to finish setting up\?/);
   assert.doesNotMatch(mems[3].match(/"[^"]*"/)[0], /sha256|pinned|commit/, "TR-TPL-9: plain words in the question");
-  assert.match(mems[3], /Any reply meaning yes/);
+  assert.match(mems[3], /Any yes is a go\. After it, later chats and routine runs reinstall silently/);
   assert.match(mems[4], /Only if bytes and sha256 match, mkdir -p and move it there/);
   assert.match(mems[4], /one plain sentence and what to do next/);
   const r = spawnSync("python3", [path.join(root, "bot/build-bootstrap.py"), "--check"], { encoding: "utf8" });
@@ -125,4 +125,20 @@ test("TR-TPL-10: the template's getting-started copy asks the install question f
   assert.ok(!/courier-inbox|threadroost-catchup|webhook|deploy/i.test(t.split("\n3. ")[0]), "no routine or deploy talk before install");
   assert.ok(t.indexOf("TRPIN rule") < t.indexOf("workflows/threadroost-getting-started/SKILL.md"), "install before the real getting-started");
   assert.ok(t.length <= 1200, `template copy is ${t.length} chars, keep it short to hand-type`);
+});
+
+test("TR-TPL-11: the template description (the only instruction text that survives import) carries the install-first step", () => {
+  const root = path.resolve(import.meta.dirname, "../..");
+  const d = fs.readFileSync(path.join(root, "bot/template-description.md"), "utf8").trim();
+  const ask = fs.readFileSync(path.join(root, "bot/template-bootstrap.md"), "utf8").trim().split("\n\n")[3].match(/"([^"]*)"/)[1];
+  const [pitch, rule] = d.split("\n\n");
+  assert.match(pitch, /^Files your SuperGrok and Claude chats into this bot, word for word/, "marketing copy stays first on the public card");
+  assert.ok(!pitch.includes(";"), "no semicolons in marketing copy");
+  assert.ok(rule.includes(`send only: "${ask}"`), "first chat sends only the plain install question, same as the TRPIN ask");
+  assert.match(rule, /before anything else \(even routine questions\)/);
+  assert.match(rule, /Don't turn on any routine before that install/);
+  assert.ok(rule.indexOf("TRPIN rule") < rule.indexOf("installed threadroost-getting-started"), "install, then getting-started");
+  assert.match(rule, /every later chat and routine run, silently reinstall/);
+  assert.match(rule, /intake\.py must match the sha256 pin inside threadroost-intake/);
+  assert.ok(d.length <= 1000, `description is ${d.length} chars`);
 });
