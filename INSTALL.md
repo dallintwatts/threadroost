@@ -1,4 +1,8 @@
-# Install Threadroost (about 5 minutes)
+# Install Threadroost
+
+Three steps: add the bot, deploy your Worker, connect your chat app. The setup script itself took 22 seconds on a
+fresh clone in our timed run (2026-10-16). The rest is copy and paste in Grok Bot, Cloudflare and grok.com, so your
+time depends mostly on whether you already have a Cloudflare account and Node.js.
 
 You need:
 - A **SuperGrok** plan (for custom connectors) and/or **Claude** (custom connectors work on every plan, and Free allows only one).

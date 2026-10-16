@@ -499,8 +499,13 @@ fi
 MCP_URL="$worker_url/mcp"
 printf '\n%sDone. Your connector URL:%s\n\n    %s\n\n' "$B" "$N" "$MCP_URL"
 printf '%sNext steps%s\n' "$B" "$N"
-info "1. Nothing to copy to your bot. It gets a one-time claim link by itself within a minute and"
-info "   collects its own token. Then it sends you a Connect link."
+if [ "$webhook_set" = 1 ]; then
+  info "1. Nothing to copy to your bot. It gets a one-time claim link by itself within a minute and"
+  info "   collects its own token. Then it sends you a Connect link."
+else
+  info "1. Your bot can't hear from this Worker yet because the webhook is not set. In your bot's chat, say:"
+  info "   Show my Threadroost webhook. Then run ./setup.sh --reset-webhook and paste the two values."
+fi
 info "2. Open the Connect link. It shows your connector URL, a pairing code and the SuperGrok"
 info "   instruction, each with a Copy button."
 if [ -n "$OPT_BOT_DIR" ]; then info "   (Bot intake config is also in place at $OPT_BOT_DIR.)"; fi

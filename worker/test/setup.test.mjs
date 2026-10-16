@@ -291,3 +291,15 @@ test("webhook probe: a busy bot is retried once, and a lasting failure shows the
   assert.ok(r2.out.includes("Webhook test failed: your bot answered HTTP 400") && r2.out.includes("Your bot replied: Automation run rate limit reached"), r2.out);
   assert.ok(r2.out.includes("./setup.sh --no-deploy to test again") && !r2.out.includes(KEY), r2.out);
 });
+
+test("TR-SETUP-1: skipped webhook does not promise a claim link in next steps", async () => {
+  const sb = sandbox();
+  await bind(sb);
+  fs.writeFileSync(path.join(sb.cf, "logged_in"), "1");
+  fs.writeFileSync(path.join(sb.w, "wrangler.jsonc"), setName(TEMPLATE_CFG, "courier-skip"));
+  const r = await run(sb, ["--skip-webhook"], "");
+  assert.equal(r.code, 0, r.out);
+  assert.doesNotMatch(r.out, /Nothing to copy to your bot/);
+  assert.match(r.out, /webhook is not set/);
+  assert.match(r.out, /--reset-webhook/);
+});

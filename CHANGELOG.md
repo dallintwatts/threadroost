@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased (2026-10-16)
+- Setup (TR-SETUP-1): when the webhook is skipped, `setup.sh` no longer promises a claim link. It says how to add the webhook with `--reset-webhook`. Covered by `test/setup.test.mjs`.
+- Pages (TR-COPY-2): the sign-in error page now reads "This sign-in link didn't work", says nothing was shared and how to add the connector again. The raw error stays as a support detail. Covered by `test/pages.test.mjs`.
+- Site and docs (TR-COPY-3): setup time is now described by steps, not an unmeasured "about five minutes". INSTALL.md states the measured 22-second script time. The cost answer now matches the free-plan limit, the Cloudflare answer names the GitHub account the Deploy button needs, the old-chats answer no longer implies an import, and the remove answer covers Deploy-button users.
+
 ## Unreleased (2026-10-15)
 - Pages (TR-A11Y-1): the connector's sign-in and error pages now declare their language, are marked noindex, and announce a wrong or expired pairing code to screen readers (`role="alert"`, tied to the code field). The "Not allowed" page now says nothing was shared and what to do next, and "Too many attempts" says to retry on the same page. Covered by `test/pages.test.mjs`.
 - Docs (TR-DOC-2): INSTALL.md step 3 now names the real Connect page button, **Show my pairing code** (it said "Show my setup"). A test keeps the two in step.

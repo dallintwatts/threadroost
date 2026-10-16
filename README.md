@@ -10,7 +10,7 @@ copy in Cloudflare is deleted. Nobody else holds your keys or your chats.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/dallintwatts/threadroost/tree/main/worker)
 
-**Set up in about 5 minutes:** follow [INSTALL.md](INSTALL.md). Copy buttons for every snippet are on the
+**Set up in three steps:** follow [INSTALL.md](INSTALL.md). Copy buttons for every snippet are on the
 [setup helper page](docs/index.html). Want your own address instead of workers.dev? See [CUSTOM-DOMAIN.md](CUSTOM-DOMAIN.md).
 
 > Not affiliated with xAI or Anthropic. The free Cloudflare plan covers normal use.
