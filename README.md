@@ -27,7 +27,7 @@ copy in Cloudflare is deleted. Nobody else holds your keys or your chats.
 
 ## Quick start
 
-1. **Add the Threadroost bot template** to Grok Bot and say "Show my Threadroost webhook" in its chat.
+1. **Add the [Threadroost bot template](https://x.ai/bot/y8jcsoZFQCZDHcQ8eaUPN)** to Grok Bot, say hi, approve its two routine cards, then say "Show my Threadroost webhook" in its chat.
    The bot sends private links to its **Webhook URL** and **webhook key**. Setup asks for both. Never paste the key into a chat.
 2. **Deploy your Worker** with one of these:
    - **One command** (macOS, Linux or WSL with Node 22+):

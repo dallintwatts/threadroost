@@ -69,3 +69,13 @@ test("TR-TPL-1: getting-started creates both routines on first run, and INSTALL 
   assert.match(inst, /creates any that are missing/);
   assert.match(inst, /threadroost-catchup/);
 });
+
+test("TR-TPL-5: docs carry the published template link, no placeholder left", () => {
+  const root = path.resolve(import.meta.dirname, "../..");
+  const url = "https://x.ai/bot/y8jcsoZFQCZDHcQ8eaUPN";
+  for (const f of ["INSTALL.md", "README.md", "docs/index.html"]) {
+    const s = fs.readFileSync(path.join(root, f), "utf8");
+    assert.doesNotMatch(s, /<BOT_TEMPLATE_URL>/, f);
+    assert.ok(s.includes(url), `${f} links the template`);
+  }
+});
