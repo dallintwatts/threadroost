@@ -84,7 +84,7 @@ then export `CLOUDFLARE_API_TOKEN` (and `CLOUDFLARE_ACCOUNT_ID`) before running 
 Within a minute of deploying, your Worker sends your bot a one-time claim link through the webhook. The bot claims
 its pull token by itself (you never see or copy it), then sends you a **Connect link**.
 
-Open it and click **Show my setup**. The page works once and gives you three things to copy:
+Open it and click **Show my pairing code**. The page works once and gives you three things to copy:
 1. The **connector URL**. In grok.com go to **Connectors → New Connector → Custom** and paste it.
 2. The **pairing code** (expires in 10 minutes). grok.com opens the Threadroost sign-in page. Type it and click **Approve**.
 3. The **live sync instruction**. Paste it into a SuperGrok Project's Instructions (details in step 5).
