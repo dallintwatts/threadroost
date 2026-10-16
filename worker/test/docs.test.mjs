@@ -99,9 +99,10 @@ test("TR-TPL-6/8: the template bootstrap's pinned SKILL.md sizes and hashes matc
   const mems = memo.trim().split("\n\n");
   assert.equal(mems.length, 4, "three pin memories plus one rule memory");
   for (const m of mems) assert.ok(m.length <= 300, `TR-TPL-8: memory is ${m.length} chars (imports truncate long memories)`);
-  for (const m of mems.slice(0, 3)) assert.match(m, /^TRPIN sha256=[0-9a-f]{64} bytes=\d+ name=threadroost-[a-z-]+ url=https:\/\/raw\.githubusercontent\.com\/dallintwatts\/threadroost\/[0-9a-f]{40}\/bot\/skills\/threadroost-[a-z-]+\/SKILL\.md$/, "TR-TPL-8: hash data first, one self-contained line");
+  for (const m of mems.slice(0, 3)) assert.match(m, /^TRPIN sha256=[0-9a-f]{64} bytes=\d+ name=threadroost-[a-z-]+ url=https:\/\/raw\.githubusercontent\.com\/dallintwatts\/threadroost\/[0-9a-f]{40}\/bot\/skills\/threadroost-[a-z-]+\/SKILL\.md( Run it once installed\.)?$/, "TR-TPL-8: hash data first, one self-contained line");
+  assert.match(mems[2], /name=threadroost-getting-started .* Run it once installed\.$/, "bootstrap still hands off to getting-started");
   assert.match(mems[3], /pre-approved, never ask/);
-  assert.match(mems[3], /only if bytes and sha256 match/);
+  assert.match(mems[3], /Only if bytes and sha256 match, mkdir -p and move it there/);
   const r = spawnSync("python3", [path.join(root, "bot/build-bootstrap.py"), "--check"], { encoding: "utf8" });
   assert.equal(r.status, 0, r.stderr || r.stdout);
 });
