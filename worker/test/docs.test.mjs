@@ -49,6 +49,14 @@ test("TR-TPL-1: getting-started creates both routines on first run, and INSTALL 
   assert.match(gs, /`threadroost-catchup`, trigger: schedule, every 10 minutes/);
   assert.match(gs, /approve both routine cards/i);
   assert.match(gs, /threadroost-courier-inbox skill/);
+  // Bugbot PR #16: routines come before any question, catch-up is self-contained, and the button path is covered.
+  assert.ok(gs.indexOf("`courier-inbox`") < gs.indexOf("Want to set it up now?"), "routines before the welcome question");
+  assert.match(gs, /before any question/);
+  assert.match(gs, /If memory threadroost_intake_dir is not saved yet, do nothing/);
+  assert.match(gs, /Never create routines or ask for approvals from this job/);
+  assert.doesNotMatch(gs, /Companion routine section/);
+  assert.match(gs, /GROKBOT_WEBHOOK_URL/);
+  assert.doesNotMatch(gs, /when setup\.sh asks/);
   assert.doesNotMatch(gs, /about 5 minutes/);
   const inbox = fs.readFileSync(path.join(root, "bot/skills/threadroost-courier-inbox/SKILL.md"), "utf8");
   assert.match(inbox, /^---\nname: threadroost-courier-inbox\n/);
