@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased (2026-10-16)
+- Pages (TR-COPY-4, Bugbot on PR #12): the "Too many attempts" sign-in page no longer asks you to enter the code "on this page" (it has no code field). It says nothing was shared, to wait a minute and start the connection again from Grok or Claude. Covered by `test/pages.test.mjs`.
 - Setup (TR-SETUP-1): when the webhook is skipped, `setup.sh` no longer promises a claim link. It says how to add the webhook with `--reset-webhook`. Covered by `test/setup.test.mjs`.
 - Pages (TR-COPY-2): the sign-in error page now reads "This sign-in link didn't work", says nothing was shared and how to add the connector again. The raw error stays as a support detail. Covered by `test/pages.test.mjs`.
 - Site and docs (TR-COPY-3): setup time is now described by steps, not an unmeasured "about five minutes". INSTALL.md states the measured 22-second script time. The cost answer now matches the free-plan limit, the Cloudflare answer names the GitHub account the Deploy button needs, the old-chats answer no longer implies an import, and the remove answer covers Deploy-button users.

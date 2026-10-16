@@ -41,3 +41,12 @@ test("TR-COPY-2: the sign-in error page is plain words, says nothing was shared 
   assert.match(m[1], /add the connector again/);
   assert.match(m[1], /Details for support/);
 });
+
+test("TR-COPY-4: the rate-limit page does not ask for a code it has no field for", () => {
+  const m = /return page\("Slow down", "([\s\S]*?)", 429\)/.exec(src);
+  assert.ok(m, "rate-limit page");
+  assert.doesNotMatch(m[1], /on this page/);
+  assert.doesNotMatch(m[1], /<input/);
+  assert.match(m[1], /start the connection again/);
+  assert.match(m[1], /Nothing was shared/);
+});
