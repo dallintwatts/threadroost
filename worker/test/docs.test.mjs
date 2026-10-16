@@ -51,7 +51,10 @@ test("TR-TPL-1: getting-started creates both routines on first run, and INSTALL 
   assert.match(gs, /approve both routine cards/i);
   assert.match(gs, /threadroost-courier-inbox skill/);
   // Bugbot PR #16: routines come before any question, catch-up is self-contained, and the button path is covered.
-  assert.ok(gs.indexOf("`courier-inbox`") < gs.indexOf("Want to set it up now?"), "routines before the welcome question");
+  assert.ok(gs.indexOf("`courier-inbox`") < gs.indexOf("Terminal command or one-click button?"), "routines before the welcome question");
+  assert.match(gs, /Already deployed\? Just say so\./, "TR-TPL-9: install and deploy questions folded into one turn");
+  assert.match(gs, /Already deployed: this bot's webhook is new, so do step 3/, "TR-TPL-9 (Bugbot #22): already-deployed path still sets the new webhook and reclaims");
+  assert.doesNotMatch(gs.split("\n").filter((l) => l.includes('say')).join(" "), /sha256|pinned|commit/, "TR-TPL-9: no jargon in what the bot says");
   assert.match(gs, /before any question/);
   assert.match(gs, /If memory threadroost_intake_dir is not saved yet, do nothing/);
   assert.match(gs, /Never create routines or ask for approvals from this job/);
@@ -97,12 +100,15 @@ test("TR-TPL-6/8: the template bootstrap's pinned SKILL.md sizes and hashes matc
   const root = path.resolve(import.meta.dirname, "../..");
   const memo = fs.readFileSync(path.join(root, "bot/template-bootstrap.md"), "utf8");
   const mems = memo.trim().split("\n\n");
-  assert.equal(mems.length, 4, "three pin memories plus one rule memory");
+  assert.equal(mems.length, 5, "three pin memories, the ask, and the rule");
   for (const m of mems) assert.ok(m.length <= 300, `TR-TPL-8: memory is ${m.length} chars (imports truncate long memories)`);
-  for (const m of mems.slice(0, 3)) assert.match(m, /^TRPIN sha256=[0-9a-f]{64} bytes=\d+ name=threadroost-[a-z-]+ url=https:\/\/raw\.githubusercontent\.com\/dallintwatts\/threadroost\/[0-9a-f]{40}\/bot\/skills\/threadroost-[a-z-]+\/SKILL\.md( Run it once installed\.)?$/, "TR-TPL-8: hash data first, one self-contained line");
-  assert.match(mems[2], /name=threadroost-getting-started .* Run it once installed\.$/, "bootstrap still hands off to getting-started");
-  assert.match(mems[3], /pre-approved, never ask/);
-  assert.match(mems[3], /Only if bytes and sha256 match, mkdir -p and move it there/);
+  for (const m of mems.slice(0, 3)) assert.match(m, /^TRPIN sha256=[0-9a-f]{64} bytes=\d+ name=threadroost-[a-z-]+ url=https:\/\/raw\.githubusercontent\.com\/dallintwatts\/threadroost\/[0-9a-f]{40}\/bot\/skills\/threadroost-[a-z-]+\/SKILL\.md( Then run it\.)?$/, "TR-TPL-8: hash data first, one self-contained line");
+  assert.match(mems[2], /name=threadroost-getting-started .* Then run it\.$/, "bootstrap still hands off to getting-started");
+  assert.match(mems[3], /Want me to finish setting up\?/);
+  assert.doesNotMatch(mems[3].match(/"[^"]*"/)[0], /sha256|pinned|commit/, "TR-TPL-9: plain words in the question");
+  assert.match(mems[3], /Any reply meaning yes/);
+  assert.match(mems[4], /Only if bytes and sha256 match, mkdir -p and move it there/);
+  assert.match(mems[4], /one plain sentence and what to do next/);
   const r = spawnSync("python3", [path.join(root, "bot/build-bootstrap.py"), "--check"], { encoding: "utf8" });
   assert.equal(r.status, 0, r.stderr || r.stdout);
 });
