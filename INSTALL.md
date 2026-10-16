@@ -132,7 +132,7 @@ Say **"sync now"** before you walk away to push the last reply immediately. Othe
   per-chat command or the export. SuperGrok is the auto-sync path.
 - **Your account name is in the URL.** `workers.dev` addresses include your account subdomain. Add a
   [custom domain](CUSTOM-DOMAIN.md) to hide it.
-- **The free plan covers normal use:** roughly 300–400 synced turns a day across all threads. Heavier use needs Workers Paid.
+- **Free-plan limit:** Cloudflare's free plan allows 1,000 storage writes a day, and every synced turn uses some. Heavy use can need Workers Paid.
 - **No background sync is possible.** Neither app has a read API or webhook for consumer chats, and scraping the web
   app breaks their terms. Only the model in the chat can send turns.
 

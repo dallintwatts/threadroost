@@ -83,7 +83,7 @@ This is my own notebook. Copy text faithfully and don't rephrase it. If a turn i
 <tr><th>SuperGrok</th><td>True auto-sync: every turn goes across while it's fresh. Your bot files one transcript per chat.</td></tr>
 <tr><th>Claude</th><td>User-triggered (“log this”) or account export. Standing auto-sync is blocked by Claude's safeguards.</td></tr>
 <tr><th>Fidelity</th><td>Best effort. The model re-types each turn, so it can skip one or trim a very long answer. Gaps the Worker can see are flagged.</td></tr>
-<tr><th>Cost</th><td>About double the model's output, which counts against your chat plan. Cloudflare's free plan covers roughly 300–400 synced turns a day (our estimate from free-plan storage limits).</td></tr>
+<tr><th>Cost</th><td>About double the model's output, which counts against your chat plan. Cloudflare's free plan allows 1,000 storage writes a day, and every synced turn uses some. Heavy use can need Workers Paid.</td></tr>
 <tr><th>History</th><td>Turns from before you started come from the account data export (grok.com: Settings → Data Controls. claude.ai: Settings → Privacy → Export data.)</td></tr>
 </table>
 

@@ -107,7 +107,7 @@ These come from how the chat apps work, not from bugs in Threadroost. Read them 
   (grok.com: Settings → Data Controls. claude.ai: Settings → Privacy → Export data.).
 - **Your account name is in the URL** (`<worker>.<your-subdomain>.workers.dev`) unless you add a
   [custom domain](CUSTOM-DOMAIN.md).
-- **Free-plan budget:** roughly 300–400 synced turns a day across all threads (KV writes). Heavier use needs Workers Paid.
+- **Free-plan budget:** Cloudflare's free plan allows 1,000 storage (KV) writes a day, and every synced turn uses some. Heavy use can need Workers Paid.
 
 ## How it works
 
