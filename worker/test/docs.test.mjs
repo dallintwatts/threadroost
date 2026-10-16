@@ -112,3 +112,17 @@ test("TR-TPL-6/8: the template bootstrap's pinned SKILL.md sizes and hashes matc
   const r = spawnSync("python3", [path.join(root, "bot/build-bootstrap.py"), "--check"], { encoding: "utf8" });
   assert.equal(r.status, 0, r.stderr || r.stdout);
 });
+
+test("TR-TPL-10: the template's getting-started copy asks the install question first and creates no routines before install", () => {
+  const root = path.resolve(import.meta.dirname, "../..");
+  const t = fs.readFileSync(path.join(root, "bot/template-getting-started.md"), "utf8");
+  const ask = fs.readFileSync(path.join(root, "bot/template-bootstrap.md"), "utf8").trim().split("\n\n")[3].match(/"([^"]*)"/)[1];
+  assert.match(t, /^---\nname: threadroost-getting-started\n/, "same name as gettingStarted in the share");
+  const step1 = t.split("\n1. ")[1].split("\n2. ")[0];
+  assert.ok(step1.includes(`"${ask}"`), "step 1 is exactly the TRPIN ask question");
+  assert.match(step1, /only this, word for word/);
+  assert.match(step1, /Create no routines and ask nothing else yet/);
+  assert.ok(!/courier-inbox|threadroost-catchup|webhook|deploy/i.test(t.split("\n3. ")[0]), "no routine or deploy talk before install");
+  assert.ok(t.indexOf("TRPIN rule") < t.indexOf("workflows/threadroost-getting-started/SKILL.md"), "install before the real getting-started");
+  assert.ok(t.length <= 1200, `template copy is ${t.length} chars, keep it short to hand-type`);
+});
