@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased (2026-10-16)
+- Docs (TR-TPL-5): INSTALL, README and the setup helper page link the published bot template (https://x.ai/bot/y8jcsoZFQCZDHcQ8eaUPN) and say to approve its two routine cards. A test keeps the placeholder from coming back.
 - Bot template (TR-TPL-4, Bugbot on PR #16): getting-started creates both routines in its first reply before any question, the catch-up job is self-contained (silent until set up, never creates routines), and the Deploy-button path gets its webhook links and connector URL.
 - Bot template (TR-TPL-1): the getting-started skill is now in the repo and creates the `courier-inbox` and `threadroost-catchup` routines on first run if they are missing. The routine spec ships as a skill, threadroost-courier-inbox, built from bot/courier-inbox-routine.md. INSTALL step 2 says what actually happens. Covered by `test/docs.test.mjs`.
 - Skill (TR-SIZE-1): `bot/intake.py` now uses 1-space indents (same Python syntax tree, checked with `ast.dump`), so the embedded skill drops from 23,967 to 22,113 bytes (1,887 under the 24,000 cap). intake.py sha256 9cbea18ff3ce. A test keeps at least 1,500 bytes of headroom.

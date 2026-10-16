@@ -13,7 +13,7 @@ You need:
 
 ## 1. Install the bot template and copy its webhook
 
-1. Open the Threadroost bot template link (`<BOT_TEMPLATE_URL>`) and tap **Add to Grok Bot**.
+1. Open the Threadroost bot template link (https://x.ai/bot/y8jcsoZFQCZDHcQ8eaUPN) and tap **Add to Grok Bot**.
 2. Say hi to the new bot. On its first chat it checks for its two routines and creates any that are missing (a
    template brings the bot's instructions and skills, and each routine needs your approval on your account): `courier-inbox` (webhook) and
    `threadroost-catchup` (every 10 minutes, files anything a missed webhook left behind).
