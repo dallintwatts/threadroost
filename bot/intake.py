@@ -417,7 +417,11 @@ def main():
  a = ap.parse_args()
  cfg, token = load_config()
  api = Api(cfg["worker_url"], token)
- tz = cfg.get("timezone", "UTC")
+ tz, tz_bad = cfg.get("timezone") or "UTC", None
+ try:
+  ZoneInfo(tz)
+ except Exception:
+  tz_bad, tz = tz, "UTC"
  if a.cmd == "pair":
   st, p = api.call("POST", "/api/pair")
   if st != 200:
@@ -440,6 +444,8 @@ def main():
  out = {"ok": ids is not None and all(r["ok"] for r in results), "processed": len(results), "results": results}
  if ids is None:
   out["error"] = p.get("error", f"http_{st}")
+ if tz_bad:
+  out["timezone_warning"] = "invalid timezone, using UTC"
  alert = None if (one or a.dry_run) else check_alert(api, root)
  if alert:
   out["alert"] = alert

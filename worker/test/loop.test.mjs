@@ -205,6 +205,24 @@ test("TR-BUG-16: the template ships a working bot intake (intake.py + config.jso
   assert.notEqual(bad.status, 0);
 });
 
+test("TR-TPL-7: a copied placeholder timezone still files (UTC) and warns, instead of crashing", async () => {
+  const os = await import("node:os");
+  const bot = path.resolve(import.meta.dirname, "../../bot");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "intake-tz-"));
+  fs.copyFileSync(path.join(bot, "intake.py"), path.join(dir, "intake.py"));
+  fs.writeFileSync(path.join(dir, "pull_token"), PULL, { mode: 0o600 });
+  const ex = JSON.parse(fs.readFileSync(path.join(bot, "config.example.json"), "utf8"));
+  fs.writeFileSync(path.join(dir, "config.json"), JSON.stringify({ ...ex, worker_url: W.url, handoffs_root: path.join(dir, "out") }), { mode: 0o600 });
+  const c = await client();
+  const { id } = await send(c, "tz placeholder", T(2, (i) => `tz ${i}`));
+  await c.call("finish_handoff", { handoff_id: id, total_chunks: 1, total_turns: 2 });
+  const r = await runPy([path.join(dir, "intake.py"), "drain"]);
+  assert.equal(r.status, 0, r.stderr);
+  const out = JSON.parse(r.stdout.trim().split("\n").at(-1));
+  assert.ok(out.results.some((x) => x.handoff_id === id && x.ok), r.stdout);
+  assert.match(out.timezone_warning || "", /UTC/);
+});
+
 test("cold review: many missing chunks answer at once (no re-check storm)", async () => {
   const c = await client();
   const id = (await c.call("start_handoff", { title: "many missing", mode: "verbatim", expected_turns: 2 })).data.handoff_id;
@@ -242,10 +260,11 @@ test("TR-BUG-30: a fresh install from the threadroost-intake skill text alone fi
   assert.equal(crypto.createHash("sha256").update(code, "utf8").digest("hex"), m[1]);
   assert.ok(skill.includes(`must print \`${m[1]}\``), "install step shows the same sha256");
   const cfgShape = JSON.parse(skill.match(/```json\n([\s\S]*?)\n```/)[1]);
+  assert.match(cfgShape.timezone, /^<.*>$/, "TR-TPL-7: the bot fills in the owner's zone");
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "skill-install-"));
   fs.writeFileSync(path.join(dir, "intake.py"), code, { mode: 0o700 });
   fs.writeFileSync(path.join(dir, "pull_token"), PULL, { mode: 0o600 });
-  fs.writeFileSync(path.join(dir, "config.json"), JSON.stringify({ ...cfgShape, worker_url: W.url, handoffs_root: path.join(dir, "out") }), { mode: 0o600 });
+  fs.writeFileSync(path.join(dir, "config.json"), JSON.stringify({ ...cfgShape, worker_url: W.url, timezone: "Europe/London", handoffs_root: path.join(dir, "out") }), { mode: 0o600 });
   const dry = await runPy([path.join(dir, "intake.py"), "drain", "--dry-run", "--no-ack"]);
   assert.equal(dry.status, 0, dry.stderr);
   const c = await client();

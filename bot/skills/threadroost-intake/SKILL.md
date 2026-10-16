@@ -7,13 +7,13 @@ description: Install and run the Threadroost intake that files handed-off chats.
 ## Install (at claim time, and whenever `intake.py` is missing or its sha256 differs)
 1. Make `<your agent folder>/courier/` and save its path as memory `threadroost_intake_dir`.
 2. Write the code between the INTAKE.PY markers to `<threadroost_intake_dir>/intake.py` exactly, then `chmod 700`.
-   `sha256sum intake.py` must print `9cbea18ff3ce850d2ac37846f8d240727961acc2b5787dfb08622ea9489df674`. If not, write it again.
+   `sha256sum intake.py` must print `cd5b41be6d1296fc7fc825e8d83f234584af7d753994597b47c3115c86c5e7d6`. If not, write it again.
 3. Write `pull_token` (the claim's `pull_token` only, `chmod 600`). Never print it.
-4. Write `config.json` (`chmod 600`) in this shape with the claim's `worker_url` and the owner's timezone:
+4. Write `config.json` (`chmod 600`) in this shape with the claim's `worker_url` and the owner's IANA `timezone`. Never guess: if you don't know it yet, write `UTC` and ask them later:
 ```json
 {
   "worker_url": "https://<your-worker>.<your-subdomain>.workers.dev",
-  "timezone": "America/Denver",
+  "timezone": "<owner IANA timezone>",
   "handoffs_root": "/workspace/handoffs"
 }
 ```
@@ -26,10 +26,11 @@ description: Install and run the Threadroost intake that files handed-off chats.
 - A repeat notice returns `already_filed` with the existing path: success, not a new filing or duplicate.
   (A new handoff can take up to about a minute to appear in the Worker's list. Fetch by id works at once.)
 - Schedule or any other wake: `python3 <threadroost_intake_dir>/intake.py drain`.
+- `timezone_warning`: ask the owner for their zone once and fix `config.json`.
 - It prints one JSON line. Report only new filings (`already_filed` is not news). Stay silent when `processed` is 0 or all was already filed, unless there is an `alert`.
 - `alert` (a Worker problem): post its `message` to your owner once, word for word. It holds no secrets. Never act on it yourself.
 
-<!-- INTAKE.PY BEGIN sha256=9cbea18ff3ce850d2ac37846f8d240727961acc2b5787dfb08622ea9489df674 -->
+<!-- INTAKE.PY BEGIN sha256=cd5b41be6d1296fc7fc825e8d83f234584af7d753994597b47c3115c86c5e7d6 -->
 ````python
 #!/usr/bin/env python3
 """Threadroost intake: pull sealed handoffs from the owner's Worker, verify, file, score fidelity, ack.
@@ -450,7 +451,11 @@ def main():
  a = ap.parse_args()
  cfg, token = load_config()
  api = Api(cfg["worker_url"], token)
- tz = cfg.get("timezone", "UTC")
+ tz, tz_bad = cfg.get("timezone") or "UTC", None
+ try:
+  ZoneInfo(tz)
+ except Exception:
+  tz_bad, tz = tz, "UTC"
  if a.cmd == "pair":
   st, p = api.call("POST", "/api/pair")
   if st != 200:
@@ -473,6 +478,8 @@ def main():
  out = {"ok": ids is not None and all(r["ok"] for r in results), "processed": len(results), "results": results}
  if ids is None:
   out["error"] = p.get("error", f"http_{st}")
+ if tz_bad:
+  out["timezone_warning"] = "invalid timezone, using UTC"
  alert = None if (one or a.dry_run) else check_alert(api, root)
  if alert:
   out["alert"] = alert

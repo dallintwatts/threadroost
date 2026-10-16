@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased (2026-10-16)
+- Skill (TR-TPL-7): the intake skill's config.json shape and `bot/config.example.json` now carry a `<owner IANA timezone>` placeholder instead of a real zone, and the skill tells the bot to write `UTC` until the owner says. intake.py now falls back to UTC on an invalid zone and reports `timezone_warning` instead of crashing (Bugbot on PR #19). New intake.py sha256 cd5b41be6d12. Tests: docs.test "TR-TPL-7", loop.test "TR-TPL-7" and "TR-BUG-30".
 - Docs (TR-TPL-5): INSTALL, README and the setup helper page link the published bot template (https://x.ai/bot/y8jcsoZFQCZDHcQ8eaUPN) and say to approve its two routine cards. A test keeps the placeholder from coming back.
 - Bot template (TR-TPL-4, Bugbot on PR #16): getting-started creates both routines in its first reply before any question, the catch-up job is self-contained (silent until set up, never creates routines), and the Deploy-button path gets its webhook links and connector URL.
 - Bot template (TR-TPL-1): the getting-started skill is now in the repo and creates the `courier-inbox` and `threadroost-catchup` routines on first run if they are missing. The routine spec ships as a skill, threadroost-courier-inbox, built from bot/courier-inbox-routine.md. INSTALL step 2 says what actually happens. Covered by `test/docs.test.mjs`.
