@@ -91,3 +91,12 @@ test("TR-TPL-7: shipped skills and config example carry a timezone placeholder, 
   }
   assert.match(fs.readFileSync(path.join(root, "bot/skills/threadroost-intake/SKILL.md"), "utf8"), /Never guess: if you don't know it yet/);
 });
+
+test("TR-TPL-6: the template bootstrap's pinned SKILL.md sizes and hashes match the files at its pinned commit", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const root = path.resolve(import.meta.dirname, "../..");
+  const memo = fs.readFileSync(path.join(root, "bot/template-bootstrap.md"), "utf8");
+  assert.ok(memo.length <= 1200, `bootstrap memory is ${memo.length} chars`);
+  const r = spawnSync("python3", [path.join(root, "bot/build-bootstrap.py"), "--check"], { encoding: "utf8" });
+  assert.equal(r.status, 0, r.stderr || r.stdout);
+});
