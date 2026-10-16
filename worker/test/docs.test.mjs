@@ -89,5 +89,5 @@ test("TR-TPL-7: shipped skills and config example carry a timezone placeholder, 
     assert.doesNotMatch(s, /"timezone":\s*"[A-Za-z]+\/[A-Za-z_]+"/, `${f}: hard-coded timezone`);
     assert.doesNotMatch(s, /America\/Denver/, `${f}: owner's timezone leaked`);
   }
-  assert.match(fs.readFileSync(path.join(root, "bot/skills/threadroost-intake/SKILL.md"), "utf8"), /ask them if you don't know it, never guess/);
+  assert.match(fs.readFileSync(path.join(root, "bot/skills/threadroost-intake/SKILL.md"), "utf8"), /Never guess: if you don't know it yet/);
 });

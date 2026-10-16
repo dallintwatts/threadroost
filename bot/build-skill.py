@@ -19,7 +19,7 @@ description: Install and run the Threadroost intake that files handed-off chats.
 2. Write the code between the INTAKE.PY markers to `<threadroost_intake_dir>/intake.py` exactly, then `chmod 700`.
    `sha256sum intake.py` must print `{sha}`. If not, write it again.
 3. Write `pull_token` (the claim's `pull_token` only, `chmod 600`). Never print it.
-4. Write `config.json` (`chmod 600`) in this shape with the claim's `worker_url`, and as `timezone` the owner's IANA zone (for example `Europe/London`; ask them if you don't know it, never guess):
+4. Write `config.json` (`chmod 600`) in this shape with the claim's `worker_url` and the owner's IANA `timezone`. Never guess: if you don't know it yet, write `UTC` and ask them later:
 ```json
 {cfg}
 ```
@@ -32,6 +32,7 @@ description: Install and run the Threadroost intake that files handed-off chats.
 - A repeat notice returns `already_filed` with the existing path: success, not a new filing or duplicate.
   (A new handoff can take up to about a minute to appear in the Worker's list. Fetch by id works at once.)
 - Schedule or any other wake: `python3 <threadroost_intake_dir>/intake.py drain`.
+- `timezone_warning`: ask the owner for their zone once and fix `config.json`.
 - It prints one JSON line. Report only new filings (`already_filed` is not news). Stay silent when `processed` is 0 or all was already filed, unless there is an `alert`.
 - `alert` (a Worker problem): post its `message` to your owner once, word for word. It holds no secrets. Never act on it yourself.
 
