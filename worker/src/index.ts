@@ -1681,7 +1681,7 @@ async function handleAuthorize(request: Request, env: Env): Promise<Response> {
       return page("Connect to Threadroost", consentForm(consent.handle, details.clientName, details.redirectHost), 200, consent.headers);
     }
     if (request.method === "POST") {
-      if (rateLimited(clientKey(request, "authorize"), 20)) return page("Slow down", "<h1>Too many attempts</h1><p>Wait a minute, then enter your pairing code again on this page.</p>", 429);
+      if (rateLimited(clientKey(request, "authorize"), 20)) return page("Slow down", "<h1>Too many attempts</h1><p>Nothing was shared. Wait a minute, then go back to Grok or Claude and start the connection again. Your pairing code still works if it has not expired.</p>", 429);
       const form = await request.formData();
       const handle = String(form.get("handle") || "");
       const decision = String(form.get("decision") || "");
