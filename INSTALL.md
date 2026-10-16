@@ -83,6 +83,7 @@ then export `CLOUDFLARE_API_TOKEN` (and `CLOUDFLARE_ACCOUNT_ID`) before running 
    - **`GROKBOT_WEBHOOK_URL`** and **`GROKBOT_WEBHOOK_KEY`:** paste them from the two links your bot sent ("Show my Threadroost webhook"). Cloudflare stores the key as a secret.
    - There is no token field. Your Worker makes its own pull token on first start and hands it only to your bot.
 4. Click **Create and deploy**. When it finishes, copy the Worker URL (`https://<name>.<subdomain>.workers.dev`).
+5. Open that Worker URL once in your browser. That first visit is what tells your Worker its address and sends your bot the claim link.
 
 ## 3. Open the Connect link your bot sends you
 
