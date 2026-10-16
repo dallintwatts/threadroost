@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased (2026-10-16)
+- Skill (TR-SIZE-1): `bot/intake.py` now uses 1-space indents (same Python syntax tree, checked with `ast.dump`), so the embedded skill drops from 23,967 to 22,113 bytes (1,887 under the 24,000 cap). intake.py sha256 9cbea18ff3ce. A test keeps at least 1,500 bytes of headroom.
 - Pages (TR-COPY-4, Bugbot on PR #12): the "Too many attempts" sign-in page no longer asks you to enter the code "on this page" (it has no code field). It says nothing was shared, to wait a minute and start the connection again from Grok or Claude. Covered by `test/pages.test.mjs`.
 - Setup (TR-SETUP-1): when the webhook is skipped, `setup.sh` no longer promises a claim link. It says how to add the webhook with `--reset-webhook`. Covered by `test/setup.test.mjs`.
 - Pages (TR-COPY-2): the sign-in error page now reads "This sign-in link didn't work", says nothing was shared and how to add the connector again. The raw error stays as a support detail. Covered by `test/pages.test.mjs`.

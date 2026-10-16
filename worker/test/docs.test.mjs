@@ -35,3 +35,9 @@ test("published docs carry no owner-specific values", { skip: !have && "docs not
     assert.doesNotMatch(s, /workers\.dev\/(?!mcp)[^\s)`'"]*[a-z0-9]{6,}/, `${f}: concrete workers.dev URL`);
   }
 });
+
+test("TR-SIZE-1: the intake skill keeps at least 1,500 bytes of headroom under the 24,000-byte cap", () => {
+  const p = path.resolve(import.meta.dirname, "../../bot/skills/threadroost-intake/SKILL.md");
+  const n = fs.statSync(p).size;
+  assert.ok(n <= 22500, `skill is ${n} bytes`);
+});
