@@ -41,3 +41,20 @@ test("TR-SIZE-1: the intake skill keeps at least 1,500 bytes of headroom under t
   const n = fs.statSync(p).size;
   assert.ok(n <= 22500, `skill is ${n} bytes`);
 });
+
+test("TR-TPL-1: getting-started creates both routines on first run, and INSTALL says the bot creates them", () => {
+  const root = path.resolve(import.meta.dirname, "../..");
+  const gs = fs.readFileSync(path.join(root, "bot/skills/threadroost-getting-started/SKILL.md"), "utf8");
+  assert.match(gs, /`courier-inbox`, trigger: incoming webhook/);
+  assert.match(gs, /`threadroost-catchup`, trigger: schedule, every 10 minutes/);
+  assert.match(gs, /approve both routine cards/i);
+  assert.match(gs, /threadroost-courier-inbox skill/);
+  assert.doesNotMatch(gs, /about 5 minutes/);
+  const inbox = fs.readFileSync(path.join(root, "bot/skills/threadroost-courier-inbox/SKILL.md"), "utf8");
+  assert.match(inbox, /^---\nname: threadroost-courier-inbox\n/);
+  assert.ok(inbox.endsWith(fs.readFileSync(path.join(root, "bot/courier-inbox-routine.md"), "utf8")), "routine skill matches the spec");
+  const inst = fs.readFileSync(path.join(root, "INSTALL.md"), "utf8");
+  assert.doesNotMatch(inst, /The template adds two routines/);
+  assert.match(inst, /creates any that are missing/);
+  assert.match(inst, /threadroost-catchup/);
+});

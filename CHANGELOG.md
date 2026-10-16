@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased (2026-10-16)
+- Bot template (TR-TPL-1): the getting-started skill is now in the repo and creates the `courier-inbox` and `threadroost-catchup` routines on first run if they are missing. The routine spec ships as a skill, threadroost-courier-inbox, built from bot/courier-inbox-routine.md. INSTALL step 2 says what actually happens. Covered by `test/docs.test.mjs`.
 - Skill (TR-SIZE-1): `bot/intake.py` now uses 1-space indents (same Python syntax tree, checked with `ast.dump`), so the embedded skill drops from 23,967 to 22,113 bytes (1,887 under the 24,000 cap). intake.py sha256 9cbea18ff3ce. A test keeps at least 1,500 bytes of headroom.
 - Pages (TR-COPY-4, Bugbot on PR #12): the "Too many attempts" sign-in page no longer asks you to enter the code "on this page" (it has no code field). It says nothing was shared, to wait a minute and start the connection again from Grok or Claude. Covered by `test/pages.test.mjs`.
 - Setup (TR-SETUP-1): when the webhook is skipped, `setup.sh` no longer promises a claim link. It says how to add the webhook with `--reset-webhook`. Covered by `test/setup.test.mjs`.
