@@ -1727,7 +1727,7 @@ async function handleAuthorize(request: Request, env: Env): Promise<Response> {
     if (error instanceof AuthorizationError || error instanceof CimdFetchError) {
       const msg = error instanceof AuthorizationError ? error.description : "This app could not be verified.";
       log("authorize", { outcome: "auth_error" });
-      return page("Authorization error", `<h1>Authorization error</h1><p>${escapeHtml(msg)}</p><p class="muted">Start the connection again from your client.</p>`, 400);
+      return page("Sign-in didn't start", `<h1>This sign-in link didn't work.</h1><p>Nothing was shared. Go back to Grok or Claude and add the connector again with your connector URL. If it happens again, remove the connector there first, then add it again.</p><p class="muted">Details for support: ${escapeHtml(msg)}</p>`, 400);
     }
     throw error;
   }

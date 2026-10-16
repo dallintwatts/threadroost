@@ -32,3 +32,12 @@ test("INSTALL.md names the Connect page button exactly", { skip: !fs.existsSync(
   const install = fs.readFileSync(installPath, "utf8");
   assert.ok(install.includes(`click **${label}**`), `INSTALL.md should say click **${label}**`);
 });
+
+test("TR-COPY-2: the sign-in error page is plain words, says nothing was shared and what to do", () => {
+  assert.doesNotMatch(src, /<h1>Authorization error<\/h1>/);
+  const m = /return page\("Sign-in didn't start", `([\s\S]*?)`, 400\)/.exec(src);
+  assert.ok(m, "plain-words sign-in error page");
+  assert.match(m[1], /Nothing was shared/);
+  assert.match(m[1], /add the connector again/);
+  assert.match(m[1], /Details for support/);
+});
