@@ -92,11 +92,16 @@ test("TR-TPL-7: shipped skills and config example carry a timezone placeholder, 
   assert.match(fs.readFileSync(path.join(root, "bot/skills/threadroost-intake/SKILL.md"), "utf8"), /Never guess: if you don't know it yet/);
 });
 
-test("TR-TPL-6: the template bootstrap's pinned SKILL.md sizes and hashes match the files at its pinned commit", async () => {
+test("TR-TPL-6/8: the template bootstrap's pinned SKILL.md sizes and hashes match the files at its pinned commit", async () => {
   const { spawnSync } = await import("node:child_process");
   const root = path.resolve(import.meta.dirname, "../..");
   const memo = fs.readFileSync(path.join(root, "bot/template-bootstrap.md"), "utf8");
-  assert.ok(memo.length <= 1200, `bootstrap memory is ${memo.length} chars`);
+  const mems = memo.trim().split("\n\n");
+  assert.equal(mems.length, 4, "three pin memories plus one rule memory");
+  for (const m of mems) assert.ok(m.length <= 300, `TR-TPL-8: memory is ${m.length} chars (imports truncate long memories)`);
+  for (const m of mems.slice(0, 3)) assert.match(m, /^TRPIN sha256=[0-9a-f]{64} bytes=\d+ name=threadroost-[a-z-]+ url=https:\/\/raw\.githubusercontent\.com\/dallintwatts\/threadroost\/[0-9a-f]{40}\/bot\/skills\/threadroost-[a-z-]+\/SKILL\.md$/, "TR-TPL-8: hash data first, one self-contained line");
+  assert.match(mems[3], /pre-approved, never ask/);
+  assert.match(mems[3], /only if bytes and sha256 match/);
   const r = spawnSync("python3", [path.join(root, "bot/build-bootstrap.py"), "--check"], { encoding: "utf8" });
   assert.equal(r.status, 0, r.stderr || r.stdout);
 });
