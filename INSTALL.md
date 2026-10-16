@@ -14,17 +14,18 @@ You need:
 ## 1. Install the bot template and copy its webhook
 
 1. Open the Threadroost bot template link (`<BOT_TEMPLATE_URL>`) and tap **Add to Grok Bot**.
-2. In the new bot's chat, say **"Show my Threadroost webhook"**. The Grok Bot app doesn't show a routine's webhook
+2. Say hi to the new bot. On its first chat it checks for its two routines and creates any that are missing (a
+   template brings the bot's instructions and skills, and each routine needs your approval on your account): `courier-inbox` (webhook) and
+   `threadroost-catchup` (every 10 minutes, files anything a missed webhook left behind).
+   **Approve both routine cards right away.** Setup can't finish until you do. An unapproved card just waits, which
+   stalled one test setup for about 45 minutes.
+3. In the bot's chat, say **"Show my Threadroost webhook"**. The Grok Bot app doesn't show a routine's webhook
    in the Routines pane, so the bot replies with two private in-chat links instead:
    - **Webhook URL**
    - **Webhook key** (treat it like a password)
    When your Worker is up, the bot claims its token by itself and installs its intake in its own folder
    (`<agent folder>/courier/` with `intake.py`, `config.json` and `pull_token`). You don't copy anything.
-   **Approve the routine cards right away.** The template adds two routines, `courier-inbox` (webhook) and
-   `threadroost-catchup` (every 10 minutes, files anything a missed webhook left behind). Each shows an approval
-   card in the bot's chat, and setup can't finish until you approve them. An unapproved card just waits, which
-   stalled one test setup for about 45 minutes.
-3. Open each link when step 2 asks for it and copy the value. Never paste the key into a chat, including the bot's
+4. Open each link when step 3 asks for it and copy the value. Never paste the key into a chat, including the bot's
    own chat. Paste it only into `setup.sh`'s hidden prompt or Cloudflare's secret field. If a key ever lands in a
    chat, ask the bot to make a new webhook key, then run `./setup.sh --reset-webhook`.
 

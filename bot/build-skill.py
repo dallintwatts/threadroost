@@ -40,9 +40,17 @@ description: Install and run the Threadroost intake that files handed-off chats.
 {code}````
 <!-- INTAKE.PY END -->
 """
+
+# The courier-inbox routine spec travels as a skill too, so routines created on first run can follow it.
+spec = open(os.path.join(HERE, "courier-inbox-routine.md"), encoding="utf-8").read()
+cskill = "---\nname: threadroost-courier-inbox\ndescription: How the courier-inbox (webhook) and threadroost-catchup (every 10 minutes) routines handle Threadroost events. Use on every run of either routine.\n---\n" + spec
+cout = os.path.join(HERE, "skills", "threadroost-courier-inbox", "SKILL.md")
 out = os.path.join(HERE, "skills", "threadroost-intake", "SKILL.md")
 if "--check" in sys.argv:
     cur = open(out, encoding="utf-8").read() if os.path.exists(out) else ""
-    sys.exit(0 if cur == skill else 1)
+    ccur = open(cout, encoding="utf-8").read() if os.path.exists(cout) else ""
+    sys.exit(0 if cur == skill and ccur == cskill else 1)
 open(out, "w", encoding="utf-8").write(skill)
+os.makedirs(os.path.dirname(cout), exist_ok=True)
+open(cout, "w", encoding="utf-8").write(cskill)
 print(f"wrote {out} ({len(skill.encode())} bytes, intake sha256 {sha[:12]})")
