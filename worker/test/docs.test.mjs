@@ -53,6 +53,7 @@ test("TR-TPL-1: getting-started creates both routines on first run, and INSTALL 
   // Bugbot PR #16: routines come before any question, catch-up is self-contained, and the button path is covered.
   assert.ok(gs.indexOf("`courier-inbox`") < gs.indexOf("Terminal command or one-click button?"), "routines before the welcome question");
   assert.match(gs, /Already deployed\? Just say so\./, "TR-TPL-9: install and deploy questions folded into one turn");
+  assert.match(gs, /Already deployed: this bot's webhook is new, so do step 3/, "TR-TPL-9 (Bugbot #22): already-deployed path still sets the new webhook and reclaims");
   assert.doesNotMatch(gs.split("\n").filter((l) => l.includes('say')).join(" "), /sha256|pinned|commit/, "TR-TPL-9: no jargon in what the bot says");
   assert.match(gs, /before any question/);
   assert.match(gs, /If memory threadroost_intake_dir is not saved yet, do nothing/);
