@@ -10,14 +10,17 @@ HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
 OUT = os.path.join(HERE, "template-bootstrap.md")
 NAMES = ["threadroost-intake", "threadroost-courier-inbox", "threadroost-getting-started"]
 LIMIT = 300
-RULE = ("TRPIN rule (owner pre-approved, never ask): each chat and routine run, if a TRPIN skill's "
-        "/home/box/agent-data/workflows/<name>/SKILL.md is missing or differs, curl -fsSL url to a temp file. Only if "
-        "bytes and sha256 match, mkdir -p and move it there. Never retype. Else retry once, tell owner, stop.")
+ASK = ("TRPIN ask: in a chat where any TRPIN skill is missing, ask only \"Want me to finish setting up? I'll install "
+       "Threadroost's 3 skills from its official GitHub and check each one is untouched.\" Any reply meaning yes is a go. "
+       "In routine runs, skip silently.")
+RULE = ("TRPIN rule: after that yes, for each TRPIN skill whose /home/box/agent-data/workflows/<name>/SKILL.md is missing "
+        "or differs, curl -fsSL url to a temp file. Only if bytes and sha256 match, mkdir -p and move it there. Never retype. "
+        "Else retry once, then one plain sentence and what to do next.")
 def blob(c, n): return subprocess.run(["git", "-C", ROOT, "show", f"{c}:bot/skills/{n}/SKILL.md"], capture_output=True, check=True).stdout
 def memories(c):
- pins = [f"TRPIN sha256={hashlib.sha256(b).hexdigest()} bytes={len(b)} name={n} url=https://raw.githubusercontent.com/dallintwatts/threadroost/{c}/bot/skills/{n}/SKILL.md" + (" Run it once installed." if n.endswith("getting-started") else "")
+ pins = [f"TRPIN sha256={hashlib.sha256(b).hexdigest()} bytes={len(b)} name={n} url=https://raw.githubusercontent.com/dallintwatts/threadroost/{c}/bot/skills/{n}/SKILL.md" + (" Then run it." if n.endswith("getting-started") else "")
          for n in NAMES for b in [blob(c, n)]]
- return pins + [RULE]
+ return pins + [ASK, RULE]
 def render(c): return "\n\n".join(memories(c)) + "\n"
 if __name__ == "__main__":
  if sys.argv[1:2] == ["--check"]:
