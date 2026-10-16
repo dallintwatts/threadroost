@@ -1,5 +1,5 @@
 {
   "worker_url": "https://<your-worker>.<your-subdomain>.workers.dev",
-  "timezone": "America/Denver",
+  "timezone": "<owner IANA timezone>",
   "handoffs_root": "/workspace/handoffs"
 }

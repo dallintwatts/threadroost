@@ -19,7 +19,7 @@ description: Install and run the Threadroost intake that files handed-off chats.
 2. Write the code between the INTAKE.PY markers to `<threadroost_intake_dir>/intake.py` exactly, then `chmod 700`.
    `sha256sum intake.py` must print `{sha}`. If not, write it again.
 3. Write `pull_token` (the claim's `pull_token` only, `chmod 600`). Never print it.
-4. Write `config.json` (`chmod 600`) in this shape with the claim's `worker_url` and the owner's timezone:
+4. Write `config.json` (`chmod 600`) in this shape with the claim's `worker_url`, and as `timezone` the owner's IANA zone (for example `Europe/London`; ask them if you don't know it, never guess):
 ```json
 {cfg}
 ```

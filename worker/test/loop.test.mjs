@@ -242,10 +242,11 @@ test("TR-BUG-30: a fresh install from the threadroost-intake skill text alone fi
   assert.equal(crypto.createHash("sha256").update(code, "utf8").digest("hex"), m[1]);
   assert.ok(skill.includes(`must print \`${m[1]}\``), "install step shows the same sha256");
   const cfgShape = JSON.parse(skill.match(/```json\n([\s\S]*?)\n```/)[1]);
+  assert.match(cfgShape.timezone, /^<.*>$/, "TR-TPL-7: the bot fills in the owner's zone");
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "skill-install-"));
   fs.writeFileSync(path.join(dir, "intake.py"), code, { mode: 0o700 });
   fs.writeFileSync(path.join(dir, "pull_token"), PULL, { mode: 0o600 });
-  fs.writeFileSync(path.join(dir, "config.json"), JSON.stringify({ ...cfgShape, worker_url: W.url, handoffs_root: path.join(dir, "out") }), { mode: 0o600 });
+  fs.writeFileSync(path.join(dir, "config.json"), JSON.stringify({ ...cfgShape, worker_url: W.url, timezone: "Europe/London", handoffs_root: path.join(dir, "out") }), { mode: 0o600 });
   const dry = await runPy([path.join(dir, "intake.py"), "drain", "--dry-run", "--no-ack"]);
   assert.equal(dry.status, 0, dry.stderr);
   const c = await client();

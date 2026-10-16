@@ -79,3 +79,15 @@ test("TR-TPL-5: docs carry the published template link, no placeholder left", ()
     assert.ok(s.includes(url), `${f} links the template`);
   }
 });
+
+test("TR-TPL-7: shipped skills and config example carry a timezone placeholder, not a real zone", () => {
+  const root = path.resolve(import.meta.dirname, "../..");
+  const ex = JSON.parse(fs.readFileSync(path.join(root, "bot/config.example.json"), "utf8"));
+  assert.match(ex.timezone, /^<.*>$/, "config.example.json timezone must be a <placeholder>");
+  for (const f of ["bot/config.example.json", "bot/build-skill.py", ...fs.readdirSync(path.join(root, "bot/skills")).map((d) => `bot/skills/${d}/SKILL.md`)]) {
+    const s = fs.readFileSync(path.join(root, f), "utf8");
+    assert.doesNotMatch(s, /"timezone":\s*"[A-Za-z]+\/[A-Za-z_]+"/, `${f}: hard-coded timezone`);
+    assert.doesNotMatch(s, /America\/Denver/, `${f}: owner's timezone leaked`);
+  }
+  assert.match(fs.readFileSync(path.join(root, "bot/skills/threadroost-intake/SKILL.md"), "utf8"), /ask them if you don't know it, never guess/);
+});
