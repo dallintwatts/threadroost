@@ -4,23 +4,27 @@ blank-line-separated block), pinned to one commit. Imported bots see long memori
 (TR-TPL-8), so each memory stays under LIMIT chars and carries its hash data first.
 Release step: after a skill change merges to main, run `python3 bot/build-bootstrap.py <merge-sha>`,
 commit the result, and paste each block as its own memory in the next template share.
+TR-TPL-12: restore only missing or empty skills, never overwrite an existing one that differs (TRPIN keep).
 `--check` re-verifies sizes, hashes and lengths against git (docs.test "TR-TPL-6" runs it)."""
 import hashlib, os, re, subprocess, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
 OUT = os.path.join(HERE, "template-bootstrap.md")
 NAMES = ["threadroost-intake", "threadroost-courier-inbox", "threadroost-getting-started"]
 LIMIT = 300
-ASK = ("TRPIN ask: in a chat where any TRPIN skill is missing, ask only \"Want me to finish setting up? I'll install "
+ASK = ("TRPIN ask: when any TRPIN skill is missing, ask only \"Want me to finish setting up? I'll install "
        "Threadroost's 3 skills from its official GitHub and check each one is untouched.\" Any yes is a go. After it, "
-       "later chats and routine runs reinstall silently.")
+       "later chats and routine runs reinstall silently (missing ones only) and name any restored.")
 RULE = ("TRPIN rule: after that yes, for each TRPIN skill whose /home/box/agent-data/workflows/<name>/SKILL.md is missing "
-        "or differs, curl -fsSL url to a temp file. Only if bytes and sha256 match, mkdir -p and move it there. Never retype. "
-        "Else retry once, then one plain sentence and what to do next.")
+        "or empty, curl -fsSL url to a temp file. Only if bytes and sha256 match, mkdir -p and move it there. Re-hash. "
+        "Never retype. Else retry once, then one plain sentence and what to do next.")
+KEEP = ("TRPIN keep: a TRPIN SKILL.md that exists but differs may be the owner's edit. Never overwrite, rename or duplicate it. "
+        "Ask once: \"Your <name> skill differs from the original. Keep yours or restore the original?\" Restore only on a clear "
+        "restore, per the TRPIN rule.")
 def blob(c, n): return subprocess.run(["git", "-C", ROOT, "show", f"{c}:bot/skills/{n}/SKILL.md"], capture_output=True, check=True).stdout
 def memories(c):
  pins = [f"TRPIN sha256={hashlib.sha256(b).hexdigest()} bytes={len(b)} name={n} url=https://raw.githubusercontent.com/dallintwatts/threadroost/{c}/bot/skills/{n}/SKILL.md" + (" Then run it." if n.endswith("getting-started") else "")
          for n in NAMES for b in [blob(c, n)]]
- return pins + [ASK, RULE]
+ return pins + [ASK, RULE, KEEP]
 def render(c): return "\n\n".join(memories(c)) + "\n"
 if __name__ == "__main__":
  if sys.argv[1:2] == ["--check"]:

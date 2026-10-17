@@ -100,13 +100,13 @@ test("TR-TPL-6/8: the template bootstrap's pinned SKILL.md sizes and hashes matc
   const root = path.resolve(import.meta.dirname, "../..");
   const memo = fs.readFileSync(path.join(root, "bot/template-bootstrap.md"), "utf8");
   const mems = memo.trim().split("\n\n");
-  assert.equal(mems.length, 5, "three pin memories, the ask, and the rule");
+  assert.equal(mems.length, 6, "three pin memories, the ask, the rule, and keep");
   for (const m of mems) assert.ok(m.length <= 300, `TR-TPL-8: memory is ${m.length} chars (imports truncate long memories)`);
   for (const m of mems.slice(0, 3)) assert.match(m, /^TRPIN sha256=[0-9a-f]{64} bytes=\d+ name=threadroost-[a-z-]+ url=https:\/\/raw\.githubusercontent\.com\/dallintwatts\/threadroost\/[0-9a-f]{40}\/bot\/skills\/threadroost-[a-z-]+\/SKILL\.md( Then run it\.)?$/, "TR-TPL-8: hash data first, one self-contained line");
   assert.match(mems[2], /name=threadroost-getting-started .* Then run it\.$/, "bootstrap still hands off to getting-started");
   assert.match(mems[3], /Want me to finish setting up\?/);
   assert.doesNotMatch(mems[3].match(/"[^"]*"/)[0], /sha256|pinned|commit/, "TR-TPL-9: plain words in the question");
-  assert.match(mems[3], /Any yes is a go\. After it, later chats and routine runs reinstall silently/);
+  assert.match(mems[3], /Any yes is a go\. After it, later chats and routine runs reinstall silently \(missing ones only\)/);
   assert.match(mems[4], /Only if bytes and sha256 match, mkdir -p and move it there/);
   assert.match(mems[4], /one plain sentence and what to do next/);
   const r = spawnSync("python3", [path.join(root, "bot/build-bootstrap.py"), "--check"], { encoding: "utf8" });
@@ -141,4 +141,26 @@ test("TR-TPL-11: the template description (the only instruction text that surviv
   assert.match(rule, /every later chat and routine run, silently reinstall/);
   assert.match(rule, /intake\.py must match the sha256 pin inside threadroost-intake/);
   assert.ok(d.length <= 1000, `description is ${d.length} chars`);
+});
+
+test("TR-TPL-12: skill restore is idempotent and never overwrites an existing skill that differs", () => {
+  const root = path.resolve(import.meta.dirname, "../..");
+  const mems = fs.readFileSync(path.join(root, "bot/template-bootstrap.md"), "utf8").trim().split("\n\n");
+  const rule = mems[4], keep = mems[5];
+  const d = fs.readFileSync(path.join(root, "bot/template-description.md"), "utf8").trim();
+  const [pitch, instr] = d.split("\n\n");
+  assert.match(rule, /SKILL\.md is missing or empty,/, "restore only missing or empty files");
+  assert.doesNotMatch(rule, /or differs/, "a differing file is never auto-replaced");
+  assert.match(rule, /Re-hash\./, "confirm after writing");
+  assert.match(keep, /^TRPIN keep: /);
+  assert.match(keep, /Never overwrite, rename or duplicate it/);
+  assert.match(keep, /Keep yours or restore the original\?/);
+  assert.doesNotMatch(keep.match(/"[^"]*"/)[0], /sha256|pinned|commit/, "plain words in the keep question");
+  assert.ok(pitch.endsWith("After import, Threadroost checks its skills and restores any the import missed."), "listing note on the public card");
+  assert.ok(!d.includes(";"), "no semicolons on the public card");
+  assert.match(instr, /silently reinstall any missing TRPIN skill, and follow TRPIN keep for one that differs/);
+  assert.match(instr, /Never overwrite or duplicate an existing skill/);
+  assert.doesNotMatch(instr, /missing or changed/, "old overwrite wording is gone");
+  const gs = fs.readFileSync(path.join(root, "bot/template-getting-started.md"), "utf8");
+  assert.match(gs, /If one exists but differs, follow TRPIN keep\. Never overwrite it\./);
 });
