@@ -14,13 +14,23 @@ You need:
 ## 1. Install the bot template and copy its webhook
 
 1. Open the Threadroost bot template link (https://x.ai/bot/y8jcsoZFQCZDHcQ8eaUPN) and tap **Add to Grok Bot**.
-2. Say hi to the new bot. On its first chat it checks for its two routines and creates any that are missing (a
-   template brings the bot's instructions and skills, and each routine needs your approval on your account): `courier-inbox` (webhook) and
-   `threadroost-catchup` (every 10 minutes, files anything a missed webhook left behind).
-   **Approve both routine cards right away.** Setup can't finish until you do. An unapproved card just waits, which
-   stalled one test setup for about 45 minutes.
-3. In the bot's chat, say **"Show my Threadroost webhook"**. The Grok Bot app doesn't show a routine's webhook
-   in the Routines pane, so the bot replies with two private in-chat links instead:
+   The template brings the bot's persona (its description) and its memories. It does not bring its skills or
+   instructions. The bot installs its skills itself after one yes in the next step.
+2. Say hi to the new bot. Its first reply is only this question:
+   "Want me to finish setting up? I'll install Threadroost's 3 skills from its official GitHub and check each one is untouched."
+   It doesn't mention routines or deploying, and turns nothing on, before you answer. Say yes.
+   The bot downloads its 3 skills (`threadroost-intake`, `threadroost-courier-inbox` and
+   `threadroost-getting-started`) from this repo, pinned at commit `1cde7d9`. It checks each file's byte count and
+   sha256 against the pins in its memories before saving it. It never retypes a skill.
+   Its next reply starts with "Installed." It checks for its two routines and creates any that are missing:
+   `courier-inbox` (webhook) and `threadroost-catchup` (every 10 minutes, files anything a missed webhook left behind).
+   Each routine needs your approval on your account. **Approve both routine cards right away.** Setup can't finish
+   until you do. An unapproved card just waits, which stalled one test setup for about 45 minutes.
+   In the same reply the bot asks **"Terminal command or one-click button? (Already deployed? Just say so.)"**
+   Terminal means Option A in step 2 below. Button means Option B. The bot walks you through the one you pick.
+3. When you're ready to paste the webhook values (in `setup.sh` or on the Deploy button's form), the bot sends them.
+   You can also ask for them any time: say **"Show my Threadroost webhook"**. The Grok Bot app doesn't show a
+   routine's webhook in the Routines pane, so the bot replies with two private in-chat links instead:
    - **Webhook URL**
    - **Webhook key** (treat it like a password)
    When your Worker is up, the bot claims its token by itself and installs its intake in its own folder
