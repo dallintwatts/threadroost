@@ -27,8 +27,11 @@ copy in Cloudflare is deleted. Nobody else holds your keys or your chats.
 
 ## Quick start
 
-1. **Add the [Threadroost bot template](https://x.ai/bot/y8jcsoZFQCZDHcQ8eaUPN)** to Grok Bot, say hi, approve its two routine cards, then say "Show my Threadroost webhook" in its chat.
-   The bot sends private links to its **Webhook URL** and **webhook key**. Setup asks for both. Never paste the key into a chat.
+1. **Add the [Threadroost bot template](https://x.ai/bot/y8jcsoZFQCZDHcQ8eaUPN)** to Grok Bot and say hi. The template brings the bot's persona and memories, not its skills or instructions.
+   Its first reply is only "Want me to finish setting up? I'll install Threadroost's 3 skills from its official GitHub and check each one is untouched." Say yes.
+   It downloads its 3 skills from this repo, pinned at commit `1cde7d9`, and checks each file's byte count and sha256 before saving it.
+   Then approve its two routine cards (`courier-inbox` and `threadroost-catchup`) and pick how to deploy: terminal command or one-click button.
+   When you're ready to paste the webhook, the bot sends private links to its **Webhook URL** and **webhook key** (or say "Show my Threadroost webhook"). Never paste the key into a chat.
 2. **Deploy your Worker** with one of these:
    - **One command** (macOS, Linux or WSL with Node 22+):
      ```bash
