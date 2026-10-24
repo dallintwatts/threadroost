@@ -156,7 +156,8 @@ test("TR-TPL-12: skill restore is idempotent and never overwrites an existing sk
   assert.match(keep, /Never overwrite, rename or duplicate it/);
   assert.match(keep, /Keep yours or restore the original\?/);
   assert.match(keep, /Ask once per chat/);
-  assert.match(keep, /A routine run leaves it as is/);
+  assert.match(keep, /Routines leave it\./);
+  assert.match(keep, /On a clear restore, check it per the TRPIN rule, then replace it\./, "Bugbot #27: restore must replace a differing file");
   assert.doesNotMatch(keep.match(/"[^"]*"/)[0], /sha256|pinned|commit/, "plain words in the keep question");
   assert.ok(pitch.endsWith("After import, Threadroost checks its skills and restores any the import missed."), "listing note on the public card");
   assert.ok(!d.includes(";"), "no semicolons on the public card");

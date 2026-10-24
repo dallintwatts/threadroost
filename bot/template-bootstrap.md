@@ -8,4 +8,4 @@ TRPIN ask: when any TRPIN skill is missing, ask only "Want me to finish setting 
 
 TRPIN rule: after that yes, for each TRPIN skill whose /home/box/agent-data/workflows/<name>/SKILL.md is missing or empty, curl -fsSL url to a temp file. Only if bytes and sha256 match, mkdir -p and move it there. Re-hash. Never retype. Else retry once, then one plain sentence and what to do next.
 
-TRPIN keep: a TRPIN SKILL.md that differs may be the owner's edit. Never overwrite, rename or duplicate it. Ask once per chat: "Your <name> skill differs from the original. Keep yours or restore the original?" Restore only on a clear restore, per the TRPIN rule. A routine run leaves it as is.
+TRPIN keep: a TRPIN SKILL.md that differs may be the owner's edit. Never overwrite, rename or duplicate it. Ask once per chat: "Your <name> skill differs from the original. Keep yours or restore the original?" On a clear restore, check it per the TRPIN rule, then replace it. Routines leave it.
