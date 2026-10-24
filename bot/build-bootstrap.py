@@ -13,13 +13,13 @@ NAMES = ["threadroost-intake", "threadroost-courier-inbox", "threadroost-getting
 LIMIT = 300
 ASK = ("TRPIN ask: when any TRPIN skill is missing, ask only \"Want me to finish setting up? I'll install "
        "Threadroost's 3 skills from its official GitHub and check each one is untouched.\" Any yes is a go. After it, "
-       "later chats and routine runs reinstall silently (missing ones only) and name any restored.")
+       "later chats and routine runs reinstall silently (missing or empty only) and name any restored.")
 RULE = ("TRPIN rule: after that yes, for each TRPIN skill whose /home/box/agent-data/workflows/<name>/SKILL.md is missing "
         "or empty, curl -fsSL url to a temp file. Only if bytes and sha256 match, mkdir -p and move it there. Re-hash. "
         "Never retype. Else retry once, then one plain sentence and what to do next.")
-KEEP = ("TRPIN keep: a TRPIN SKILL.md that exists but differs may be the owner's edit. Never overwrite, rename or duplicate it. "
-        "Ask once: \"Your <name> skill differs from the original. Keep yours or restore the original?\" Restore only on a clear "
-        "restore, per the TRPIN rule.")
+KEEP = ("TRPIN keep: a TRPIN SKILL.md that differs may be the owner's edit. Never overwrite, rename or duplicate it. "
+        "Ask once per chat: \"Your <name> skill differs from the original. Keep yours or restore the original?\" Restore only on a clear "
+        "restore, per the TRPIN rule. A routine run leaves it as is.")
 def blob(c, n): return subprocess.run(["git", "-C", ROOT, "show", f"{c}:bot/skills/{n}/SKILL.md"], capture_output=True, check=True).stdout
 def memories(c):
  pins = [f"TRPIN sha256={hashlib.sha256(b).hexdigest()} bytes={len(b)} name={n} url=https://raw.githubusercontent.com/dallintwatts/threadroost/{c}/bot/skills/{n}/SKILL.md" + (" Then run it." if n.endswith("getting-started") else "")

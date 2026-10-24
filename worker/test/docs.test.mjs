@@ -106,7 +106,7 @@ test("TR-TPL-6/8: the template bootstrap's pinned SKILL.md sizes and hashes matc
   assert.match(mems[2], /name=threadroost-getting-started .* Then run it\.$/, "bootstrap still hands off to getting-started");
   assert.match(mems[3], /Want me to finish setting up\?/);
   assert.doesNotMatch(mems[3].match(/"[^"]*"/)[0], /sha256|pinned|commit/, "TR-TPL-9: plain words in the question");
-  assert.match(mems[3], /Any yes is a go\. After it, later chats and routine runs reinstall silently \(missing ones only\)/);
+  assert.match(mems[3], /Any yes is a go\. After it, later chats and routine runs reinstall silently \(missing or empty only\)/);
   assert.match(mems[4], /Only if bytes and sha256 match, mkdir -p and move it there/);
   assert.match(mems[4], /one plain sentence and what to do next/);
   const r = spawnSync("python3", [path.join(root, "bot/build-bootstrap.py"), "--check"], { encoding: "utf8" });
@@ -155,6 +155,8 @@ test("TR-TPL-12: skill restore is idempotent and never overwrites an existing sk
   assert.match(keep, /^TRPIN keep: /);
   assert.match(keep, /Never overwrite, rename or duplicate it/);
   assert.match(keep, /Keep yours or restore the original\?/);
+  assert.match(keep, /Ask once per chat/);
+  assert.match(keep, /A routine run leaves it as is/);
   assert.doesNotMatch(keep.match(/"[^"]*"/)[0], /sha256|pinned|commit/, "plain words in the keep question");
   assert.ok(pitch.endsWith("After import, Threadroost checks its skills and restores any the import missed."), "listing note on the public card");
   assert.ok(!d.includes(";"), "no semicolons on the public card");
