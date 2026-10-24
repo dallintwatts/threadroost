@@ -106,7 +106,7 @@ test("TR-TPL-6/8: the template bootstrap's pinned SKILL.md sizes and hashes matc
   assert.match(mems[2], /name=threadroost-getting-started .* Then run it\.$/, "bootstrap still hands off to getting-started");
   assert.match(mems[3], /Want me to finish setting up\?/);
   assert.doesNotMatch(mems[3].match(/"[^"]*"/)[0], /sha256|pinned|commit/, "TR-TPL-9: plain words in the question");
-  assert.match(mems[3], /Any yes is a go\. After it, later chats and routine runs reinstall silently \(missing or empty only\)/);
+  assert.match(mems[3], /Any yes is a go\. Later chats and routine runs reinstall unasked \(missing or empty only\), then/);
   assert.match(mems[4], /Only if bytes and sha256 match, mkdir -p and move it there/);
   assert.match(mems[4], /one plain sentence and what to do next/);
   const r = spawnSync("python3", [path.join(root, "bot/build-bootstrap.py"), "--check"], { encoding: "utf8" });
@@ -138,7 +138,7 @@ test("TR-TPL-11: the template description (the only instruction text that surviv
   assert.match(rule, /before anything else \(even routine questions\)/);
   assert.match(rule, /Don't turn on any routine before that install/);
   assert.ok(rule.indexOf("TRPIN rule") < rule.indexOf("installed threadroost-getting-started"), "install, then getting-started");
-  assert.match(rule, /every later chat and routine run, silently reinstall/);
+  assert.match(rule, /every later chat and routine run, reinstall any missing or empty TRPIN skill unasked/);
   assert.match(rule, /intake\.py must match the sha256 pin inside threadroost-intake/);
   assert.ok(d.length <= 1000, `description is ${d.length} chars`);
 });
@@ -160,9 +160,11 @@ test("TR-TPL-12: skill restore is idempotent and never overwrites an existing sk
   assert.doesNotMatch(keep.match(/"[^"]*"/)[0], /sha256|pinned|commit/, "plain words in the keep question");
   assert.ok(pitch.endsWith("After import, Threadroost checks its skills and restores any the import missed."), "listing note on the public card");
   assert.ok(!d.includes(";"), "no semicolons on the public card");
-  assert.match(instr, /silently reinstall any missing TRPIN skill, and follow TRPIN keep for one that differs/);
+  assert.match(instr, /reinstall any missing or empty TRPIN skill unasked, and follow TRPIN keep for one that differs/);
   assert.match(instr, /Never overwrite or duplicate an existing skill/);
   assert.doesNotMatch(instr, /missing or changed/, "old overwrite wording is gone");
   const gs = fs.readFileSync(path.join(root, "bot/template-getting-started.md"), "utf8");
-  assert.match(gs, /If one exists but differs, follow TRPIN keep\. Never overwrite it\./);
+  assert.match(gs, /If one exists but differs, follow TRPIN keep \(after the install question if both apply\)\. Never overwrite it\./);
+  assert.match(gs, /present and not empty/);
+  assert.match(gs, /re-hash after the move fails, delete that file/);
 });
