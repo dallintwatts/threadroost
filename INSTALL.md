@@ -22,13 +22,14 @@ You need:
    The bot downloads its 3 skills (`threadroost-intake`, `threadroost-courier-inbox` and
    `threadroost-getting-started`) from this repo, pinned at commit `1cde7d9`. It checks each file's byte count and
    sha256 against the pins in its memories before saving it. It never retypes a skill.
-   Its next reply starts with "Installed." It checks for its two routines and creates any that are missing:
+   Its next reply names those three skills and says the checksums matched. It checks for its two routines and creates any that are missing, and leaves both paused:
    `courier-inbox` (webhook) and `threadroost-catchup` (every 10 minutes, files anything a missed webhook left behind).
-   Each routine needs your approval on your account. **Approve both routine cards right away.** Setup can't finish
-   until you do. An unapproved card just waits, which stalled one test setup for about 45 minutes.
+   It does not ask you to approve them in that reply, so catch-up does not run every 10 minutes yet.
    In the same reply the bot asks **"Terminal command or one-click button? (Already deployed? Just say so.)"**
    Terminal means Option A in step 2 below. Button means Option B. The bot walks you through the one you pick.
-3. When you're ready to paste the webhook values (in `setup.sh` or on the Deploy button's form), the bot sends them.
+3. When you're ready to paste the webhook values (in `setup.sh` or on the Deploy button's form), **approve both routine cards right away.** Setup can't finish
+   until you do. An unapproved card just waits, which stalled one test setup for about 45 minutes.
+   The bot then sends the webhook values.
    You can also ask for them any time: say **"Show my Threadroost webhook"**. The Grok Bot app doesn't show a
    routine's webhook in the Routines pane, so the bot replies with two private in-chat links instead:
    - **Webhook URL**

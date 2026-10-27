@@ -32,8 +32,7 @@ but never acked (for example after a failed run), so nothing waits for the next 
 Install a second routine on a schedule (every 10 minutes) that runs only the intake below. Skip silently when
 `threadroost_intake_dir` isn't saved yet. Always run the intake (it also checks for alerts). Never post when there was nothing to
 file, except an `alert` (see below). That way an alert still reaches the owner when webhooks are failing.
-Both routines need the owner's approval once. When you create them, tell the owner: "Please approve the routine card now,
-setup waits on it."
+Both routines are created paused and stay paused until the webhook step. Do not ask the owner to approve a routine card when skills are installed. getting-started turns them on at that step.
 
 On each webhook payload, read `event`:
 

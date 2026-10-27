@@ -169,3 +169,61 @@ test("TR-TPL-12: skill restore is idempotent and never overwrites an existing sk
   assert.match(gs, /present and not empty/);
   assert.match(gs, /re-hash after the move fails, delete that file/);
 });
+
+test("TR-TPL-13: install yes names the three skills and checksums, and leaves both routines paused", () => {
+  const root = path.resolve(import.meta.dirname, "../..");
+  const gs = fs.readFileSync(path.join(root, "bot/skills/threadroost-getting-started/SKILL.md"), "utf8");
+  const step1 = gs.split("\n1. ")[1].split("\n2. ")[0];
+  const step3 = gs.split("\n3. ")[1].split("\n4. ")[0];
+  // The 2026-10-26 reply. A bare "Installed." plus an approve ask in this step fails.
+  assert.doesNotMatch(step1, /start with "Installed\."/);
+  assert.doesNotMatch(step1, /Please approve both routine cards/);
+  assert.doesNotMatch(step1, /Hi, I file your SuperGrok/);
+  assert.match(step1, /Installed threadroost-intake, threadroost-courier-inbox and threadroost-getting-started\. Checksums matched\./);
+  assert.match(step1, /Leave both paused/);
+  assert.match(step1, /Do not enable either one/);
+  assert.match(step1, /Do not ask the owner to approve or turn on a routine card in this reply/);
+  assert.match(step1, /The install yes is not approval to run them/);
+  assert.match(step1, /Catch-up must not run every 10 minutes until step 3/);
+  assert.match(step1, /`courier-inbox`, trigger: incoming webhook/);
+  assert.match(step1, /`threadroost-catchup`, trigger: schedule, every 10 minutes/);
+  assert.match(step1, /Terminal command or one-click button\? \(Already deployed\? Just say so\.\)/);
+  assert.match(step1, /one plain sentence plus what to do next, then stop/);
+  // Enable only on the webhook path, after install and the deploy question.
+  assert.match(step3, /This is the first time `courier-inbox` and `threadroost-catchup` may run/);
+  assert.match(step3, /They stay paused through install and the deploy question/);
+  assert.match(step3, /Please approve both routine cards so the connector can reach me/);
+  assert.match(step3, /Wait until both are on/);
+  assert.ok(step1.indexOf("Leave both paused") < step1.indexOf("Terminal command or one-click button?"), "paused before the deploy question");
+
+  const t = fs.readFileSync(path.join(root, "bot/template-getting-started.md"), "utf8");
+  assert.doesNotMatch(t, /starting with "Installed\."/);
+  assert.match(t, /Name the 3 skills and say checksums matched/);
+  assert.match(t, /Don't enable routines/);
+  assert.match(t, /Never retype/);
+
+  const rule = fs.readFileSync(path.join(root, "bot/template-bootstrap.md"), "utf8").trim().split("\n\n")[4];
+  assert.match(rule, /Name 3 skills and say checksums matched/);
+  assert.match(rule, /Don't enable routines/);
+  assert.match(rule, /curl -fsSL url to a temp file/);
+  assert.match(rule, /Retry once, then one plain sentence and what to do next/);
+
+  const instr = fs.readFileSync(path.join(root, "bot/template-description.md"), "utf8").trim().split("\n\n")[1];
+  assert.match(instr, /name the 3 skills and say checksums matched/);
+  assert.match(instr, /Do not enable routines from that yes/);
+  assert.match(instr, /install each per the TRPIN rule/);
+  assert.match(instr, /Never retype/);
+  assert.ok(instr.indexOf("Do not enable routines from that yes") < instr.indexOf("installed threadroost-getting-started"), "no enable before following getting-started");
+
+  const spec = fs.readFileSync(path.join(root, "bot/courier-inbox-routine.md"), "utf8");
+  assert.doesNotMatch(spec, /Please approve the routine card now/);
+  assert.match(spec, /created paused and stay paused until the webhook step/);
+  assert.match(spec, /Do not ask the owner to approve a routine card when skills are installed/);
+
+  const inst = fs.readFileSync(path.join(root, "INSTALL.md"), "utf8");
+  assert.match(inst, /creates any that are missing/);
+  assert.match(inst, /leaves both paused/);
+  assert.doesNotMatch(inst, /starts with "Installed\."/);
+  assert.match(inst, /approve both routine cards right away/);
+  assert.ok(inst.indexOf("leaves both paused") < inst.indexOf("approve both routine cards right away"), "approval waits until the webhook step");
+});
