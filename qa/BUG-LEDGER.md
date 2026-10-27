@@ -14,4 +14,4 @@ The TRPIN rule is at the 300-character cap, so "Never retype" stays in the descr
 
 Test: `worker/test/docs.test.mjs` "TR-TPL-13". It fails on the old "Installed." opener and on "Please approve both routine cards" in the install step.
 
-Re-pin: this change leaves the pin at `1cde7d9e52fe268b3dbaebf3858fa842b9e2b325` so `--check` still resolves on main. After this merges, run `python3 bot/build-bootstrap.py <merge-sha>`, commit `bot/template-bootstrap.md`, and paste the six memory blocks, `bot/template-description.md`, and `bot/template-getting-started.md` into the template. Do not publish the marketplace template from an agent.
+Re-pin: memories point at `4a643d1399db2504b6e59eb93155b18622b47a97` (#28). Paste the six memory blocks, `bot/template-description.md`, and `bot/template-getting-started.md` into the template. Do not publish the marketplace template from an agent.
