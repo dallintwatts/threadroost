@@ -20,7 +20,7 @@ You need:
    "Want me to finish setting up? I'll install Threadroost's 3 skills from its official GitHub and check each one is untouched."
    It doesn't mention routines or deploying, and turns nothing on, before you answer. Say yes.
    The bot downloads its 3 skills (`threadroost-intake`, `threadroost-courier-inbox` and
-   `threadroost-getting-started`) from this repo, pinned at commit `1cde7d9`. It checks each file's byte count and
+   `threadroost-getting-started`) from this repo, pinned at commit `4a643d1`. It checks each file's byte count and
    sha256 against the pins in its memories before saving it. It never retypes a skill.
    Its next reply names those three skills and says the checksums matched. It checks for its two routines and creates any that are missing, and leaves both paused:
    `courier-inbox` (webhook) and `threadroost-catchup` (every 10 minutes, files anything a missed webhook left behind).

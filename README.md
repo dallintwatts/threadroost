@@ -29,7 +29,7 @@ copy in Cloudflare is deleted. Nobody else holds your keys or your chats.
 
 1. **Add the [Threadroost bot template](https://x.ai/bot/y8jcsoZFQCZDHcQ8eaUPN)** to Grok Bot and say hi. The template brings the bot's persona and memories, not its skills or instructions.
    Its first reply is only "Want me to finish setting up? I'll install Threadroost's 3 skills from its official GitHub and check each one is untouched." Say yes.
-   It downloads its 3 skills from this repo, pinned at commit `1cde7d9`, and checks each file's byte count and sha256 before saving it.
+   It downloads its 3 skills from this repo, pinned at commit `4a643d1`, and checks each file's byte count and sha256 before saving it.
    Its reply names `threadroost-intake`, `threadroost-courier-inbox` and `threadroost-getting-started` and says the checksums matched.
    It creates `courier-inbox` and `threadroost-catchup` paused, and asks how to deploy: terminal command or one-click button.
    Approve both routine cards when you are ready to paste the webhook, not in that reply.
